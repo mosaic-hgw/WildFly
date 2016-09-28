@@ -6,7 +6,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
 ### Tags
-* `10.1.0.Final-20160913`, `latest`
+* `10.1.0.Final-20160913`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
   - added: sha1-hash to check mySQL-connector download
   - added: sha1-hash to check wait-for-it.sh download
   - renamed: command `startWildfly.sh` to `run.sh`
@@ -26,7 +26,8 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
   ```sh
   docker run \
     -p 8080:8080 \
-    -v /path/to/your/deployments:/entrypoint-deployments mosaicgreifswald/wildfly
+    -v /path/to/your/deployments:/entrypoint-deployments \
+    mosaicgreifswald/wildfly
   ```
 
 * with deployments and jboss-batch
@@ -34,7 +35,8 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
   docker run \
     -p 8080:8080 \
     -v /path/to/your/deployments:/entrypoint-deployments \
-    -v /path/to/your/batch-files:/entrypoint-jboss-batch mosaicgreifswald/wildfly
+    -v /path/to/your/batch-files:/entrypoint-jboss-batch \
+    mosaicgreifswald/wildfly
   ```
 
 * over docker-compose
