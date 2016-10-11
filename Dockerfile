@@ -23,33 +23,62 @@ FROM jboss/wildfly:10.1.0.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 
-ENV MYSQL_CONNECTOR_VERSION	5.1.39
-ENV MYSQL_CONNECTOR_SHA1	4617fe8dc8f1969ec450984b0b9203bc8b7c8ad5
-ENV WAIT_FOR_IT_SHA1		d6bdd6de4669d72f5a04c34063d65c33b8a5450c
+ENV MYSQL_CONNECTOR_VERSION		5.1.40
+ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
+ENV MYSQL_CONNECTOR_SHA1		ef2a2ceab1735eaaae0b5d1cccf574fb7c6e1c52
+
+ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
+ENV WAIT_FOR_IT_SHA1			d6bdd6de4669d72f5a04c34063d65c33b8a5450c
+
 ENV WILDFLY_HOME			/opt/jboss/wildfly
+ENV ADMIN_USER				admin
 ENV JBOSS_CLI				$WILDFLY_HOME/bin/jboss-cli.sh
 
-ENV ENTRY_JBOSS_BATCH		/entrypoint-jboss-batch
-ENV ENTRY_DEPLOYMENTS		/entrypoint-deployments
+ENV ENTRY_JBOSS_BATCH			/entrypoint-jboss-batch
+ENV ENTRY_DEPLOYMENTS			/entrypoint-deployments
+ENV READY_PATH				/opt/jboss/ready
 
 
 USER root
-RUN mkdir $ENTRY_JBOSS_BATCH $ENTRY_DEPLOYMENTS && \
-	chmod go+w $ENTRY_JBOSS_BATCH $ENTRY_DEPLOYMENTS && \
-	chown jboss:jboss $ENTRY_JBOSS_BATCH $ENTRY_DEPLOYMENTS
+RUN mkdir $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS && \
+	chmod go+w $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS && \
+	chown jboss:jboss $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS
 USER jboss
 
 # prepare WildFly
-RUN curl -so mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar http://central.maven.org/maven2/mysql/mysql-connector-java/$MYSQL_CONNECTOR_VERSION/mysql-connector-java-$MYSQL_CONNECTOR_VERSION.jar && \
+RUN curl -so mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
 	sha1sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar | grep $MYSQL_CONNECTOR_SHA1 && \
-	curl -so wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
+	curl -so wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
 	sha1sum wait-for-it.sh | grep $WAIT_FOR_IT_SHA1 && \
 
-	{ \
+    { \
         echo '#!/bin/bash'; \
         echo; \
-        echo 'BATCH_FILES=$(comm -23 <(ls -d '$ENTRY_JBOSS_BATCH'/* | grep -v .completed) \'; \
-        echo '    <(ls -d '$ENTRY_JBOSS_BATCH'/* | grep .completed | sed "s/\.completed$//"))'; \
+        echo 'if [ ! -f "'$READY_PATH'/admin.created" ]; then'; \
+        echo '    echo "========================================================================="'; \
+        echo '    if [ -z "$NO_ADMIN" ]; then'; \
+        echo '        WILDFLY_PASS=${WILDFLY_PASS:-$(tr -cd "[:alnum:]-_!#%&/<({[|]})>+*,.;$" < /dev/urandom | head -c30)}'; \
+        echo '        '$WILDFLY_HOME'/bin/add-user.sh -s -a '$ADMIN_USER' $WILDFLY_PASS && \'; \
+        echo '        echo "  You can configure this WildFly-Server using:" && \'; \
+        echo '        echo "  '$ADMIN_USER':$WILDFLY_PASS"'; \
+        echo '    else'; \
+        echo '        echo "  You can NOT configure this WildFly-Server" && \'; \
+        echo '        echo "  because no admin-user was created."'; \
+        echo '    fi'; \
+        echo '    echo "========================================================================="'; \
+        echo '    touch '$READY_PATH'/admin.created'; \
+        echo 'fi'; \
+    } > create_wildfly_admin.sh && \
+
+    { \
+        echo '#!/bin/bash'; \
+        echo; \
+        echo './create_wildfly_admin.sh'; \
+        echo; \
+        echo 'BATCH_FILES=$(comm -23 <(ls '$ENTRY_JBOSS_BATCH' 2> /dev/null | grep -v .completed) \'; \
+        echo '    <(ls '$READY_PATH' 2> /dev/null | grep .completed | sed "s/\.completed$//"))'; \
+        echo; \
+        echo 'echo "  $(echo $BATCH_FILES | wc -w) cli-file(s) found to execute with jboss-cli.sh"'; \
         echo; \
         echo 'if [ $(echo $BATCH_FILES | wc -w) -gt 0 ]; then'; \
         echo '    if [ -L '$WILDFLY_HOME'/standalone/deployments ];then'; \
@@ -61,11 +90,11 @@ RUN curl -so mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar http://cent
         echo '    until `'$JBOSS_CLI' -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running`; do sleep 1; done;'; \
         echo; \
         echo '    for BATCH_FILE in $BATCH_FILES; do'; \
-        echo '        if [ -f "$BATCH_FILE" ]; then'; \
+        echo '        if [ -f "'$ENTRY_JBOSS_BATCH'/$BATCH_FILE" ]; then'; \
         echo '            echo "execute jboss-batchfile \"$BATCH_FILE\""'; \
-        echo '            '$JBOSS_CLI' -c --file=$BATCH_FILE'; \
+        echo '            '$JBOSS_CLI' -c --file='$ENTRY_JBOSS_BATCH'/$BATCH_FILE'; \
         echo '            if [ $? -eq 0 ]; then'; \
-        echo '                touch $BATCH_FILE.completed'; \
+        echo '                touch '$READY_PATH'/$BATCH_FILE.completed'; \
         echo '            else'; \
         echo '                echo "JBoss-Batchfile \"$BATCH_FILE\" can not be execute"'; \
         echo '                '$JBOSS_CLI' -c ":shutdown"'; \
@@ -83,7 +112,7 @@ RUN curl -so mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar http://cent
         echo; \
         echo $WILDFLY_HOME'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0'; \
     } > run.sh && \
-	chmod +x wait-for-it.sh run.sh && \
+	chmod +x wait-for-it.sh create_wildfly_admin.sh run.sh && \
 
 	$WILDFLY_HOME/bin/standalone.sh & \
 	until `$JBOSS_CLI -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running`; do sleep 1; done ; \
