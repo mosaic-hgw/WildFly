@@ -6,7 +6,11 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
 ### Tags
-* `10.1.0.Final-20160913`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `10.1.0.Final-20160930`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  mySQL-connector to 5.1.40
+  - added:    script to create admin-user with given or random password at first run
+  - improved: jboss-completed-files moved into container
+* `10.1.0.Final-20160913`
   - added: sha1-hash to check mySQL-connector download
   - added: sha1-hash to check wait-for-it.sh download
   - renamed: command `startWildfly.sh` to `run.sh`
@@ -22,12 +26,27 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
   - added: eclipselink v2.6.2
 
 ### Run your Image
-* only deployments
+* only deployments and add admin with random-password per default
   ```sh
   docker run \
     -p 8080:8080 \
     -v /path/to/your/deployments:/entrypoint-deployments \
     mosaicgreifswald/wildfly
+  ```
+
+
+* if you want to set admin-password by self, you can do it over environment variable
+  ```sh
+  docker run \
+    -e WILDFLY_PASS=top-secret
+    ...
+  ```
+
+* or you don't want to create an admin-user
+  ```sh
+  docker run \
+    -e NO_ADMIN=true
+    ...
   ```
 
 * with deployments and jboss-batch
@@ -80,7 +99,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
       command: -c "./wait-for-it.sh app-db:3306 -t 60 && ./run.sh"
   ```
 
-### Create JBoss-Batch-File
+### Examples for create JBoss-CLI-File
 * add mysql-datasource
   ```sh
   data-source add \
@@ -94,6 +113,8 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 
 * add postgresql-jdbc-driver-module and datasource
   ```sh
+  batch
+
   module add \
     --name=org.postgre \
     --resources=/entrypoint-jboss-batch/postgresql.jar \
@@ -113,4 +134,6 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
     --user-name=mosaic \
     --password=top-secret \
     --driver-name=postgre
+
+  run-batch
   ```
