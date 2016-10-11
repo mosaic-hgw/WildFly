@@ -23,20 +23,20 @@ FROM jboss/wildfly:10.1.0.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 
-ENV MYSQL_CONNECTOR_VERSION		5.1.40
+ENV MYSQL_CONNECTOR_VERSION			5.1.40
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA1		ef2a2ceab1735eaaae0b5d1cccf574fb7c6e1c52
+ENV MYSQL_CONNECTOR_SHA1			ef2a2ceab1735eaaae0b5d1cccf574fb7c6e1c52
 
 ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
-ENV WAIT_FOR_IT_SHA1			d6bdd6de4669d72f5a04c34063d65c33b8a5450c
+ENV WAIT_FOR_IT_SHA1				d6bdd6de4669d72f5a04c34063d65c33b8a5450c
 
-ENV WILDFLY_HOME			/opt/jboss/wildfly
-ENV ADMIN_USER				admin
-ENV JBOSS_CLI				$WILDFLY_HOME/bin/jboss-cli.sh
+ENV WILDFLY_HOME					/opt/jboss/wildfly
+ENV ADMIN_USER						admin
+ENV JBOSS_CLI						$WILDFLY_HOME/bin/jboss-cli.sh
 
-ENV ENTRY_JBOSS_BATCH			/entrypoint-jboss-batch
-ENV ENTRY_DEPLOYMENTS			/entrypoint-deployments
-ENV READY_PATH				/opt/jboss/ready
+ENV ENTRY_JBOSS_BATCH				/entrypoint-jboss-batch
+ENV ENTRY_DEPLOYMENTS				/entrypoint-deployments
+ENV READY_PATH						/opt/jboss/ready
 
 
 USER root
