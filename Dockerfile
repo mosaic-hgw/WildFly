@@ -23,12 +23,17 @@ FROM jboss/wildfly:10.1.0.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 
-ENV MYSQL_CONNECTOR_VERSION			5.1.40
+ENV MYSQL_CONNECTOR_VERSION			5.1.41
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA1			ef2a2ceab1735eaaae0b5d1cccf574fb7c6e1c52
+ENV MYSQL_CONNECTOR_SHA1			b0878056f15616989144d6114d36d3942321d0d1
 
 ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA1				d6bdd6de4669d72f5a04c34063d65c33b8a5450c
+
+ENV ECLIPSELINK_VERSION				2.6.4
+ENV ECLIPSELINK_DOWNLOAD_URL		http://search.maven.org/remotecontent?filepath=org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
+ENV ECLIPSELINK_PATH				modules/system/layers/base/org/eclipse/persistence/main
+ENV ECLIPSELINK_SHA1				526cc0ddb69c01784e7e9b0a048f39dc313403cb
 
 ENV WILDFLY_HOME					/opt/jboss/wildfly
 ENV ADMIN_USER						admin
@@ -46,10 +51,22 @@ RUN mkdir $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS && \
 USER jboss
 
 # prepare WildFly
-RUN curl -so mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
-	sha1sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar | grep $MYSQL_CONNECTOR_SHA1 && \
-	curl -so wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
-	sha1sum wait-for-it.sh | grep $WAIT_FOR_IT_SHA1 && \
+RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
+	sha1sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar | grep ${MYSQL_CONNECTOR_SHA1} && \
+
+	curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
+	sha1sum wait-for-it.sh | grep ${WAIT_FOR_IT_SHA1} && \
+
+	curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
+	sha1sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA1} && \
+	sed -i "s/<\/resources>/\n \
+		<resource-root path=\"eclipselink-$ECLIPSELINK_VERSION.jar\">\n \
+		    <filter>\n \
+		        <exclude path=\"javax\/**\" \/>\n \
+		    <\/filter>\n \
+		<\/resource-root>\n \
+	<\/resources>/" ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/module.xml && \
+	chown -R jboss:jboss ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
 
     { \
         echo '#!/bin/bash'; \
@@ -123,5 +140,7 @@ RUN curl -so mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CON
 	rm -rf mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar $WILDFLY_HOME/standalone/configuration/standalone_xml_history/current/*
 
 EXPOSE 8080 9990 8443 9993
+
+HEALTHCHECK --interval=5s --timeout=3s CMD $JBOSS_CLI -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running && exit 0 || exit 1
 
 CMD ["./run.sh"]

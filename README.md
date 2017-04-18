@@ -6,7 +6,11 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
 ### Tags
-* `10.1.0.Final-20160930`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `10.1.0.Final-20170418`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  mySQL-connector to 5.1.41
+  - added:    EclipseLink 2.6.4
+  - added:    Docker-Healthcheck
+* `10.1.0.Final-20160930`
   - updated:  mySQL-connector to 5.1.40
   - added:    script to create admin-user with given or random password at first run
   - improved: jboss-completed-files moved into container
