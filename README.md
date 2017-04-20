@@ -9,6 +9,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * `10.1.0.Final-20170418`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
   - updated:  mySQL-connector to 5.1.41
   - added:    EclipseLink 2.6.4
+  - added:    script to check wildfly is complete started
   - added:    Docker-Healthcheck
 * `10.1.0.Final-20160930`
   - updated:  mySQL-connector to 5.1.40

@@ -90,6 +90,14 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CO
     { \
         echo '#!/bin/bash'; \
         echo; \
+        echo '[ -f '$READY_PATH'/jboss_cli_block ] && exit 1'; \
+        echo $JBOSS_CLI' -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running && exit 0'; \
+        echo 'exit 1'; \
+    } > wildfly_started.sh && \
+
+    { \
+        echo '#!/bin/bash'; \
+        echo; \
         echo './create_wildfly_admin.sh'; \
         echo; \
         echo 'BATCH_FILES=$(comm -23 <(ls '$ENTRY_JBOSS_BATCH' 2> /dev/null | grep -v .completed) \'; \
@@ -98,6 +106,7 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CO
         echo 'echo "  $(echo $BATCH_FILES | wc -w) cli-file(s) found to execute with jboss-cli.sh"'; \
         echo; \
         echo 'if [ $(echo $BATCH_FILES | wc -w) -gt 0 ]; then'; \
+        echo '    touch '$READY_PATH'/jboss_cli_block'; \
         echo '    if [ -L '$WILDFLY_HOME'/standalone/deployments ];then'; \
         echo '        rm '$WILDFLY_HOME'/standalone/deployments'; \
         echo '        mkdir '$WILDFLY_HOME'/standalone/deployments'; \
@@ -122,17 +131,17 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CO
         echo; \
         echo '    '$JBOSS_CLI' -c ":shutdown"'; \
         echo '    rm -f '$WILDFLY_HOME'/standalone/configuration/standalone_xml_history/current/*'; \
-        echo; \
         echo '    rm -rf '$WILDFLY_HOME'/standalone/deployments'; \
         echo '    ln -s '$ENTRY_DEPLOYMENTS' '$WILDFLY_HOME'/standalone/deployments'; \
+        echo '    rm -f '$READY_PATH'/jboss_cli_block'; \
         echo 'fi'; \
         echo; \
         echo $WILDFLY_HOME'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0'; \
     } > run.sh && \
-	chmod +x wait-for-it.sh create_wildfly_admin.sh run.sh && \
+	chmod +x wait-for-it.sh create_wildfly_admin.sh wildfly_started.sh run.sh
 
-	$WILDFLY_HOME/bin/standalone.sh & \
-	until `$JBOSS_CLI -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running`; do sleep 1; done ; \
+RUN	$WILDFLY_HOME/bin/standalone.sh & \
+	until `./wildfly_started.sh`; do sleep 1; done ; \
 	$JBOSS_CLI -c "module add --name=com.mysql --resources=/opt/jboss/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar --dependencies=javax.api\,javax.transaction.api" && \
 	$JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-xa-datasource-class-name=com.mysql.jdbc.jdbc2.optional.MysqlXADataSource)" && \
 	$JBOSS_CLI -c ":shutdown" && \
@@ -141,6 +150,6 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CO
 
 EXPOSE 8080 9990 8443 9993
 
-HEALTHCHECK --interval=5s --timeout=3s CMD $JBOSS_CLI -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running && exit 0 || exit 1
+HEALTHCHECK --interval=5s --timeout=3s CMD ["./wildfly_started.sh"]
 
 CMD ["./run.sh"]
