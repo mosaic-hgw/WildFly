@@ -1,5 +1,5 @@
 # WildFly Docker Image
-This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [jboss/wildfly](https://hub.docker.com/r/jboss/wildfly/) and prepared for the tools of the MOSAIC-project:
+This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [jboss/wildfly](https://hub.docker.com/r/jboss/wildfly/) and prepared for the tools of the MOSAIC-Project:
 
 * [E-PIX](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/id-management-e-pix.html) (Enterprise Patient Identifier Crossreferencing)
 * [gPAS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/pseudonymverwaltung-gpas.html) (generic Pseudonym Administration Service)
@@ -111,7 +111,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
     --name=MySQLPool \
     --jndi-name=java:/jboss/MySQLDS \
     --connection-url=jdbc:mysql://app-db:3306/dbName \
-    --user-name=mosaic \
+    --user-name=mosaic-project \
     --password=top-secret \
     --driver-name=mysql
   ```
@@ -136,7 +136,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
     --name=PostgreSQLPool \
     --jndi-name=java:/jboss/PostgreSQLDS \
     --connection-url=jdbc:postgresql://app-db:5432/dbName \
-    --user-name=mosaic \
+    --user-name=mosaic-project \
     --password=top-secret \
     --driver-name=postgre
 
