@@ -1,14 +1,18 @@
 # WildFly Docker Image
-This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [jboss/wildfly](https://hub.docker.com/r/jboss/wildfly/) and prepared for the tools of the MOSAIC-Project:
+This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [jboss/wildfly](https://hub.docker.com/r/jboss/wildfly/) and prepared for the tools of the MOSAIC-project:
 
 * [E-PIX](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/id-management-e-pix.html) (Enterprise Patient Identifier Crossreferencing)
 * [gPAS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/pseudonymverwaltung-gpas.html) (generic Pseudonym Administration Service)
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
 ### Tags
-* `10.1.0.Final-20170418`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `10.1.0.Final-20170707`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  mySQL-connector to 5.1.42
+  - added:    mariaDB-connector 2.0.3
+  - improved: changed all sha1sum to sha256sum
+* `10.1.0.Final-20170418`
   - updated:  mySQL-connector to 5.1.41
-  - added:    EclipseLink 2.6.4
+  - updated:  EclipseLink to 2.6.4
   - added:    script to check wildfly is complete started
   - added:    Docker-Healthcheck
 * `10.1.0.Final-20160930`
@@ -16,19 +20,19 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
   - added:    script to create admin-user with given or random password at first run
   - improved: jboss-completed-files moved into container
 * `10.1.0.Final-20160913`
-  - added: sha1-hash to check mySQL-connector download
-  - added: sha1-hash to check wait-for-it.sh download
-  - renamed: command `startWildfly.sh` to `run.sh`
+  - added:    sha1-hash to check mySQL-connector download
+  - added:    sha1-hash to check wait-for-it.sh download
+  - renamed:  command `startWildfly.sh` to `run.sh`
   - few improvements
 * `10.1.0.Final-20160912`
-  - from: jboss/wildfly:10.1.0.Final
-  - added: mySQL-connector 5.1.39
-  - added: wait-for-it.sh
-  - added: script to execute automatical jboss-batch-files
+  - from:     jboss/wildfly:10.1.0.Final
+  - added:    mySQL-connector 5.1.39
+  - added:    wait-for-it.sh
+  - added:    script to execute automatical jboss-batch-files
 * `10.0.0.Final-20160601`
-  - from: piegsaj/wildfly
-  - added: mysql-connector v5.1.38
-  - added: eclipselink v2.6.2
+  - from:     piegsaj/wildfly
+  - added:    mysql-connector 5.1.38
+  - added:    EclipseLink 2.6.2
 
 ### Run your Image
 * only deployments and add admin with random-password per default
@@ -111,7 +115,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
     --name=MySQLPool \
     --jndi-name=java:/jboss/MySQLDS \
     --connection-url=jdbc:mysql://app-db:3306/dbName \
-    --user-name=mosaic-project \
+    --user-name=mosaic \
     --password=top-secret \
     --driver-name=mysql
   ```
@@ -136,7 +140,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
     --name=PostgreSQLPool \
     --jndi-name=java:/jboss/PostgreSQLDS \
     --connection-url=jdbc:postgresql://app-db:5432/dbName \
-    --user-name=mosaic-project \
+    --user-name=mosaic \
     --password=top-secret \
     --driver-name=postgre
 
