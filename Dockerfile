@@ -4,7 +4,7 @@ FROM jboss/wildfly:10.1.0.Final
 # The MOSAIC-Project - WildFly with MySQL-Connector
 # __
 # Copyright (C) 2009 - 2017 Institute for Community Medicine
-# University Medicine of Greifswald - mosaic-project@uni-greifswald.de
+# University Medicine of Greifswald – mosaic-project@uni-greifswald.de
 # __
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -23,17 +23,21 @@ FROM jboss/wildfly:10.1.0.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 
-ENV MYSQL_CONNECTOR_VERSION			5.1.41
+ENV MYSQL_CONNECTOR_VERSION			5.1.42
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA1			b0878056f15616989144d6114d36d3942321d0d1
+ENV MYSQL_CONNECTOR_SHA256			c86718705c79caf26a5772d1d28d938df02911a55941393acfdd7b57e0a23768
 
-ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
-ENV WAIT_FOR_IT_SHA1				d6bdd6de4669d72f5a04c34063d65c33b8a5450c
+ENV MARIADB_CONNECTOR_VERSION		2.0.3
+ENV MARIADB_CONNECTOR_DOWNLOAD_URL	https://downloads.mariadb.com/Connectors/java/connector-java-${MARIADB_CONNECTOR_VERSION}/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar
+ENV MARIADB_CONNECTOR_SHA256		ef7ab3d1c2b4cb09b77faa6eaeaf14f28c6025f217c6fee7c88b510341b7b8df
 
 ENV ECLIPSELINK_VERSION				2.6.4
 ENV ECLIPSELINK_DOWNLOAD_URL		http://search.maven.org/remotecontent?filepath=org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
 ENV ECLIPSELINK_PATH				modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA1				526cc0ddb69c01784e7e9b0a048f39dc313403cb
+ENV ECLIPSELINK_SHA256				e8bcc5de915a8b1d94dd71e6c832f140e42b6a5b236214a744f65893795eb385
+
+ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
+ENV WAIT_FOR_IT_SHA256				c238c56e2a81b3c97375571eb4f58a0e75cdb4cd957f5802f733ac50621e776a
 
 ENV WILDFLY_HOME					/opt/jboss/wildfly
 ENV ADMIN_USER						admin
@@ -51,14 +55,17 @@ RUN mkdir $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS && \
 USER jboss
 
 # prepare WildFly
-RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
-	sha1sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar | grep ${MYSQL_CONNECTOR_SHA1} && \
+RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
+	sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep ${MYSQL_CONNECTOR_SHA256} && \
+
+	curl -Lso mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${MARIADB_CONNECTOR_DOWNLOAD_URL} && \
+	sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar | grep ${MARIADB_CONNECTOR_SHA256} && \
 
 	curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
-	sha1sum wait-for-it.sh | grep ${WAIT_FOR_IT_SHA1} && \
+	sha256sum wait-for-it.sh | grep ${WAIT_FOR_IT_SHA256} && \
 
 	curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
-	sha1sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA1} && \
+	sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA256} && \
 	sed -i "s/<\/resources>/\n \
 		<resource-root path=\"eclipselink-$ECLIPSELINK_VERSION.jar\">\n \
 		    <filter>\n \
@@ -74,7 +81,7 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CO
         echo 'if [ ! -f "'$READY_PATH'/admin.created" ]; then'; \
         echo '    echo "========================================================================="'; \
         echo '    if [ -z "$NO_ADMIN" ]; then'; \
-        echo '        WILDFLY_PASS=${WILDFLY_PASS:-$(tr -cd "[:alnum:]-_!#%&/<({[|]})>+*,.;$" < /dev/urandom | head -c30)}'; \
+        echo '        WILDFLY_PASS=${WILDFLY_PASS:-$(tr -cd "[:alnum:]_#+*;&%$§=" < /dev/urandom | head -c20)}'; \
         echo '        '$WILDFLY_HOME'/bin/add-user.sh -s -a '$ADMIN_USER' $WILDFLY_PASS && \'; \
         echo '        echo "  You can configure this WildFly-Server using:" && \'; \
         echo '        echo "  '$ADMIN_USER':$WILDFLY_PASS"'; \
@@ -142,11 +149,13 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar ${MYSQL_CO
 
 RUN	$WILDFLY_HOME/bin/standalone.sh & \
 	until `./wildfly_started.sh`; do sleep 1; done ; \
-	$JBOSS_CLI -c "module add --name=com.mysql --resources=/opt/jboss/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar --dependencies=javax.api\,javax.transaction.api" && \
+	$JBOSS_CLI -c "module add --name=com.mysql --resources=/opt/jboss/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" && \
 	$JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-xa-datasource-class-name=com.mysql.jdbc.jdbc2.optional.MysqlXADataSource)" && \
+	$JBOSS_CLI -c "module add --name=com.mariadb --resources=/opt/jboss/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" && \
+	$JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mariadb:add(driver-name=mariadb,driver-module-name=com.mariadb,driver-xa-datasource-class-name=com.mariadb.jdbc.MysqlDataSource)" && \
 	$JBOSS_CLI -c ":shutdown" && \
 
-	rm -rf mysql-connector-java-${MYSQL_CONNECTOR_VERSION}-bin.jar $WILDFLY_HOME/standalone/configuration/standalone_xml_history/current/*
+	rm -rf mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar $WILDFLY_HOME/standalone/configuration/standalone_xml_history/current/*
 
 EXPOSE 8080 9990 8443 9993
 
