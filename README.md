@@ -6,7 +6,11 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
 ### Tags
-* `10.1.0.Final-20170707`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `11.0.0.Final-20171204`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  mySQL-connector to 5.1.45
+  - updated:  mariaDB-connector to 2.2.0
+  - updated:  EclipseLink to 2.7.0
+* `10.1.0.Final-20170707`
   - updated:  mySQL-connector to 5.1.42
   - added:    mariaDB-connector 2.0.3
   - improved: changed all sha1sum to sha256sum
