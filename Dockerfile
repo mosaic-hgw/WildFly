@@ -1,4 +1,4 @@
-FROM jboss/wildfly:10.1.0.Final
+FROM jboss/wildfly:11.0.0.Final
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector
@@ -23,21 +23,21 @@ FROM jboss/wildfly:10.1.0.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 
-ENV MYSQL_CONNECTOR_VERSION			5.1.42
+ENV MYSQL_CONNECTOR_VERSION			5.1.45
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256			c86718705c79caf26a5772d1d28d938df02911a55941393acfdd7b57e0a23768
+ENV MYSQL_CONNECTOR_SHA256			59ba9715a95b96d55790c747f24c549abd645cd1e941dae54b138c0133300d64
 
-ENV MARIADB_CONNECTOR_VERSION		2.0.3
+ENV MARIADB_CONNECTOR_VERSION		2.2.0
 ENV MARIADB_CONNECTOR_DOWNLOAD_URL	https://downloads.mariadb.com/Connectors/java/connector-java-${MARIADB_CONNECTOR_VERSION}/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar
-ENV MARIADB_CONNECTOR_SHA256		ef7ab3d1c2b4cb09b77faa6eaeaf14f28c6025f217c6fee7c88b510341b7b8df
+ENV MARIADB_CONNECTOR_SHA256		fead0b3c61eba772fdaef2abed3b80eaeadbb5706abd78acf7698fe0a871cd4c
 
-ENV ECLIPSELINK_VERSION				2.6.4
+ENV ECLIPSELINK_VERSION				2.7.0
 ENV ECLIPSELINK_DOWNLOAD_URL		http://search.maven.org/remotecontent?filepath=org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
 ENV ECLIPSELINK_PATH				modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA256				e8bcc5de915a8b1d94dd71e6c832f140e42b6a5b236214a744f65893795eb385
+ENV ECLIPSELINK_SHA256				b9b0f6b8067bfef48e5485a79086d721a4871914e2dbd68312ebddd99c6a2d5f
 
 ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
-ENV WAIT_FOR_IT_SHA256				c238c56e2a81b3c97375571eb4f58a0e75cdb4cd957f5802f733ac50621e776a
+ENV WAIT_FOR_IT_SHA256				0f75de5c9d9c37a933bb9744ffd710750d5773892930cfe40509fa505788835c
 
 ENV WILDFLY_HOME					/opt/jboss/wildfly
 ENV ADMIN_USER						admin
@@ -55,27 +55,27 @@ RUN mkdir $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS && \
 USER jboss
 
 # prepare WildFly
-RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
-	sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep ${MYSQL_CONNECTOR_SHA256} && \
+RUN echo "1. download mysql-connector" && curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
+	echo "2. check mysql-connector" && (sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep ${MYSQL_CONNECTOR_SHA256} || (>&2 echo "sha256sum failed $(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar)" && exit 1)) && \
 
-	curl -Lso mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${MARIADB_CONNECTOR_DOWNLOAD_URL} && \
-	sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar | grep ${MARIADB_CONNECTOR_SHA256} && \
+	echo "3. download mariadb-connector" && curl -Lso mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${MARIADB_CONNECTOR_DOWNLOAD_URL} && \
+	echo "4. check mariadb-connector" && (sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar | grep ${MARIADB_CONNECTOR_SHA256} || (>&2 echo "sha256sum failed $(sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar)" && exit 1)) && \
 
-	curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
-	sha256sum wait-for-it.sh | grep ${WAIT_FOR_IT_SHA256} && \
+	echo "5. download wait-for-it-script" && curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
+	echo "6. check wait-for-it-script" && (sha256sum wait-for-it.sh | grep ${WAIT_FOR_IT_SHA256} || (>&2 echo "sha256sum failed $(sha256sum wait-for-it.sh)" && exit 1)) && \
 
-	curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
-	sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA256} && \
-	sed -i "s/<\/resources>/\n \
+	echo "7. download eclipslink" && curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
+	echo "8. check eclipslink" && (sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA256} || (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
+	echo "9. configur eclipslink" && sed -i "s/<\/resources>/\n \
 		<resource-root path=\"eclipselink-$ECLIPSELINK_VERSION.jar\">\n \
 		    <filter>\n \
 		        <exclude path=\"javax\/**\" \/>\n \
 		    <\/filter>\n \
 		<\/resource-root>\n \
 	<\/resources>/" ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/module.xml && \
-	chown -R jboss:jboss ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
+	echo "10. change owner eclipslink" && chown -R jboss:jboss ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
 
-    { \
+    echo "11. create script create_wildfly_admin.sh" && { \
         echo '#!/bin/bash'; \
         echo; \
         echo 'if [ ! -f "'$READY_PATH'/admin.created" ]; then'; \
@@ -94,7 +94,7 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNEC
         echo 'fi'; \
     } > create_wildfly_admin.sh && \
 
-    { \
+    echo "12. create script wildfly_started.sh" && { \
         echo '#!/bin/bash'; \
         echo; \
         echo '[ -f '$READY_PATH'/jboss_cli_block ] && exit 1'; \
@@ -102,7 +102,7 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNEC
         echo 'exit 1'; \
     } > wildfly_started.sh && \
 
-    { \
+    echo "13. create script run.sh" && { \
         echo '#!/bin/bash'; \
         echo; \
         echo './create_wildfly_admin.sh'; \
@@ -145,7 +145,7 @@ RUN curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNEC
         echo; \
         echo $WILDFLY_HOME'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0'; \
     } > run.sh && \
-	chmod +x wait-for-it.sh create_wildfly_admin.sh wildfly_started.sh run.sh
+	echo "14. change permission scriptes" && chmod +x wait-for-it.sh create_wildfly_admin.sh wildfly_started.sh run.sh
 
 RUN	$WILDFLY_HOME/bin/standalone.sh & \
 	until `./wildfly_started.sh`; do sleep 1; done ; \
