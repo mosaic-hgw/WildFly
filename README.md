@@ -7,6 +7,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 
 ### Tags
 * `11.0.0.Final-20171204`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     jboss/wildfly:11.0.0.Final
   - updated:  mySQL-connector to 5.1.45
   - updated:  mariaDB-connector to 2.2.0
   - updated:  EclipseLink to 2.7.0
