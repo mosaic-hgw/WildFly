@@ -1,4 +1,4 @@
-FROM jboss/wildfly:11.0.0.Final
+FROM jboss/wildfly:12.0.0.Final
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector
@@ -27,14 +27,14 @@ ENV MYSQL_CONNECTOR_VERSION			5.1.45
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
 ENV MYSQL_CONNECTOR_SHA256			59ba9715a95b96d55790c747f24c549abd645cd1e941dae54b138c0133300d64
 
-ENV MARIADB_CONNECTOR_VERSION		2.2.0
+ENV MARIADB_CONNECTOR_VERSION		2.2.2
 ENV MARIADB_CONNECTOR_DOWNLOAD_URL	https://downloads.mariadb.com/Connectors/java/connector-java-${MARIADB_CONNECTOR_VERSION}/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar
-ENV MARIADB_CONNECTOR_SHA256		fead0b3c61eba772fdaef2abed3b80eaeadbb5706abd78acf7698fe0a871cd4c
+ENV MARIADB_CONNECTOR_SHA256		134a0a41a88db1bcc85f1f3431431880127664b58454ef9ee78578b3a317c70a
 
-ENV ECLIPSELINK_VERSION				2.7.0
+ENV ECLIPSELINK_VERSION				2.7.1
 ENV ECLIPSELINK_DOWNLOAD_URL		http://search.maven.org/remotecontent?filepath=org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
 ENV ECLIPSELINK_PATH				modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA256				b9b0f6b8067bfef48e5485a79086d721a4871914e2dbd68312ebddd99c6a2d5f
+ENV ECLIPSELINK_SHA256				fc600815a882e34989f1b9efaa87a4ffd698fc54eb8d8219ff74e5005b85ef52
 
 ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA256				0f75de5c9d9c37a933bb9744ffd710750d5773892930cfe40509fa505788835c
@@ -66,7 +66,7 @@ RUN echo "1. download mysql-connector" && curl -Lso mysql-connector-java-${MYSQL
 
 	echo "7. download eclipslink" && curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
 	echo "8. check eclipslink" && (sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA256} || (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
-	echo "9. configur eclipslink" && sed -i "s/<\/resources>/\n \
+	echo "9. configure eclipslink" && sed -i "s/<\/resources>/\n \
 		<resource-root path=\"eclipselink-$ECLIPSELINK_VERSION.jar\">\n \
 		    <filter>\n \
 		        <exclude path=\"javax\/**\" \/>\n \
