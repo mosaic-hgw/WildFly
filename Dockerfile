@@ -23,16 +23,16 @@ FROM jboss/wildfly:12.0.0.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 
-ENV MYSQL_CONNECTOR_VERSION			5.1.45
+ENV MYSQL_CONNECTOR_VERSION			5.1.46
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256			59ba9715a95b96d55790c747f24c549abd645cd1e941dae54b138c0133300d64
+ENV MYSQL_CONNECTOR_SHA256			3122089761e6403f02e8a81ed4a2d65a2e1029734651ba00f2ea92d920ff7b1e
 
-ENV MARIADB_CONNECTOR_VERSION		2.2.2
+ENV MARIADB_CONNECTOR_VERSION		2.2.4
 ENV MARIADB_CONNECTOR_DOWNLOAD_URL	https://downloads.mariadb.com/Connectors/java/connector-java-${MARIADB_CONNECTOR_VERSION}/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar
-ENV MARIADB_CONNECTOR_SHA256		134a0a41a88db1bcc85f1f3431431880127664b58454ef9ee78578b3a317c70a
+ENV MARIADB_CONNECTOR_SHA256		1a2c599075c47c90a98e3a47419b473aa3dbd667d1fa7e1753a9fbf6eaa01f44
 
 ENV ECLIPSELINK_VERSION				2.7.1
-ENV ECLIPSELINK_DOWNLOAD_URL		http://search.maven.org/remotecontent?filepath=org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
+ENV ECLIPSELINK_DOWNLOAD_URL		https://repo1.maven.org/maven2/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
 ENV ECLIPSELINK_PATH				modules/system/layers/base/org/eclipse/persistence/main
 ENV ECLIPSELINK_SHA256				fc600815a882e34989f1b9efaa87a4ffd698fc54eb8d8219ff74e5005b85ef52
 
@@ -82,7 +82,7 @@ RUN echo "1. download mysql-connector" && curl -Lso mysql-connector-java-${MYSQL
         echo '    echo "========================================================================="'; \
         echo '    if [ -z "$NO_ADMIN" ]; then'; \
         echo '        WILDFLY_PASS=${WILDFLY_PASS:-$(tr -cd "[:alnum:]_#+*;&%$§=" < /dev/urandom | head -c20)}'; \
-        echo '        '$WILDFLY_HOME'/bin/add-user.sh -s -a '$ADMIN_USER' $WILDFLY_PASS && \'; \
+        echo '        '$WILDFLY_HOME'/bin/add-user.sh '$ADMIN_USER' $WILDFLY_PASS && \'; \
         echo '        echo "  You can configure this WildFly-Server using:" && \'; \
         echo '        echo "  '$ADMIN_USER':$WILDFLY_PASS"'; \
         echo '    else'; \
