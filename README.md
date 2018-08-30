@@ -1,12 +1,20 @@
 # WildFly Docker Image
-This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [jboss/wildfly](https://hub.docker.com/r/jboss/wildfly/) and prepared for the tools of the MOSAIC-project:
+This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [jboss/wildfly](https://hub.docker.com/r/jboss/wildfly/) and prepared for the tools of the MOSAIC-project (but can also be used for all other projects):
 
 * [E-PIX](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/id-management-e-pix.html) (Enterprise Patient Identifier Crossreferencing)
 * [gPAS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/pseudonymverwaltung-gpas.html) (generic Pseudonym Administration Service)
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
+
+
 ### Tags
-* `12.0.0.Final-20180515`, `12.0.0.Final`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `13.0.0.Final-20180830`, `13.0.0.Final`, `13`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     jboss/wildfly:13.0.0.Final
+  - updated:  mySQL-connector to 8.0.11
+  - updated:  mariaDB-connector to 2.2.6
+  - updated:  EclipseLink to 2.7.3
+  - installed:'which' for wait-for-it.sh
+* `12.0.0.Final-20180515`, `12.0.0.Final`
   - updated:  mySQL-connector to 5.1.46
   - updated:  mariaDB-connector to 2.2.4
   - fixed:    creating admin-user
@@ -19,6 +27,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
   - updated:  mySQL-connector to 5.1.45
   - updated:  mariaDB-connector to 2.2.0
   - updated:  EclipseLink to 2.7.0
+  - updated:  wait-for-it.sh from Jul 20, 2017
 * `10.1.0.Final-20170707`
   - updated:  mySQL-connector to 5.1.42
   - added:    mariaDB-connector 2.0.3
@@ -40,7 +49,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * `10.1.0.Final-20160912`
   - from:     jboss/wildfly:10.1.0.Final
   - added:    mySQL-connector 5.1.39
-  - added:    wait-for-it.sh
+  - added:    wait-for-it.sh from Apr 11, 2016
   - added:    script to execute automatical jboss-batch-files
 * `10.0.0.Final-20160601`
   - from:     piegsaj/wildfly
