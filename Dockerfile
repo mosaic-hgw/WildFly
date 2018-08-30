@@ -1,4 +1,4 @@
-FROM jboss/wildfly:12.0.0.Final
+FROM jboss/wildfly:13.0.0.Final
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector
@@ -23,20 +23,21 @@ FROM jboss/wildfly:12.0.0.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 
-ENV MYSQL_CONNECTOR_VERSION			5.1.46
+ENV MYSQL_CONNECTOR_VERSION			8.0.11
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256			3122089761e6403f02e8a81ed4a2d65a2e1029734651ba00f2ea92d920ff7b1e
+ENV MYSQL_CONNECTOR_SHA256			0cbe25eb4b4e7a38f52374a46283fc2381c68870581651925db752000c0d053d
 
-ENV MARIADB_CONNECTOR_VERSION		2.2.4
+ENV MARIADB_CONNECTOR_VERSION		2.2.6
 ENV MARIADB_CONNECTOR_DOWNLOAD_URL	https://downloads.mariadb.com/Connectors/java/connector-java-${MARIADB_CONNECTOR_VERSION}/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar
-ENV MARIADB_CONNECTOR_SHA256		1a2c599075c47c90a98e3a47419b473aa3dbd667d1fa7e1753a9fbf6eaa01f44
+ENV MARIADB_CONNECTOR_SHA256		4d28fbd8fd4ea239b0ef9482f56ce77e2ef197a60d523a8ee3c84eb984fc76fe
 
-ENV ECLIPSELINK_VERSION				2.7.1
+ENV ECLIPSELINK_VERSION				2.7.3
 ENV ECLIPSELINK_DOWNLOAD_URL		https://repo1.maven.org/maven2/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
 ENV ECLIPSELINK_PATH				modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA256				fc600815a882e34989f1b9efaa87a4ffd698fc54eb8d8219ff74e5005b85ef52
+ENV ECLIPSELINK_SHA256				028b097396296c7442d2de14c3f6abda25c8e34c1b4134de6ade3b1e6aacc07f
 
-ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
+ENV WAIT_FOR_IT_COMMIT_HASH			8ed92e8cab83cfed76ff012ed4a36cef74b28096
+ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA256				0f75de5c9d9c37a933bb9744ffd710750d5773892930cfe40509fa505788835c
 
 ENV WILDFLY_HOME					/opt/jboss/wildfly
@@ -51,7 +52,8 @@ ENV READY_PATH						/opt/jboss/ready
 USER root
 RUN mkdir $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS && \
 	chmod go+w $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS && \
-	chown jboss:jboss $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS
+	chown jboss:jboss $ENTRY_JBOSS_BATCH $READY_PATH $ENTRY_DEPLOYMENTS && \
+	yum -y install which
 USER jboss
 
 # prepare WildFly
