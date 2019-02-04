@@ -8,7 +8,18 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 
 
 ### Tags
-* `13.0.0.Final-20180830`, `13.0.0.Final`, `13`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `15.0.1.Final-20190204`, `15.0.1.Final`, `15`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     jboss/wildfly:15.0.1.Final
+  - updated:  mySQL-connector to v8.0.15
+  - updated:  mariaDB-connector to v2.4.0
+  - updated:  EclipseLink to v2.7.4
+  - updated:  wait-for-it.sh from Nov 04, 2018
+  - added:    debug-mode on port 8787
+  - fixed:    script run.sh
+  - improved: generated admin-password without special characters
+  - improved: deployment-scanner
+  - improved: which-installation
+* `13.0.0.Final-20180830`, `13.0.0.Final`, `13`
   - from:     jboss/wildfly:13.0.0.Final
   - updated:  mySQL-connector to 8.0.11
   - updated:  mariaDB-connector to 2.2.6
