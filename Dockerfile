@@ -23,31 +23,31 @@ FROM jboss/wildfly:15.0.1.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 # variables
-ENV MYSQL_CONNECTOR_VERSION			8.0.15
-ENV MYSQL_CONNECTOR_DOWNLOAD_URL	http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256			8ae9fca44d84506399d7f806a7896e4e056daa31571ec67c645bdcacfa434f58
+ENV MYSQL_CONNECTOR_VERSION         8.0.15
+ENV MYSQL_CONNECTOR_DOWNLOAD_URL    http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
+ENV MYSQL_CONNECTOR_SHA256          8ae9fca44d84506399d7f806a7896e4e056daa31571ec67c645bdcacfa434f58
 
-ENV MARIADB_CONNECTOR_VERSION		2.4.0
-ENV MARIADB_CONNECTOR_DOWNLOAD_URL	https://downloads.mariadb.com/Connectors/java/connector-java-${MARIADB_CONNECTOR_VERSION}/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar
-ENV MARIADB_CONNECTOR_SHA256		1b7e3ab5b940df96894bcab56b7750559754ed0ee2b063338707eda33e8c66a5
+ENV MARIADB_CONNECTOR_VERSION       2.4.0
+ENV MARIADB_CONNECTOR_DOWNLOAD_URL  https://downloads.mariadb.com/Connectors/java/connector-java-${MARIADB_CONNECTOR_VERSION}/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar
+ENV MARIADB_CONNECTOR_SHA256        1b7e3ab5b940df96894bcab56b7750559754ed0ee2b063338707eda33e8c66a5
 
-ENV ECLIPSELINK_VERSION				2.7.4
-ENV ECLIPSELINK_DOWNLOAD_URL		https://repo1.maven.org/maven2/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
-ENV ECLIPSELINK_PATH				modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA256				ca7cecafa370b421bf1e34d20a41c8c8a2023c5caf7f206e74b3fdda03330dcd
+ENV ECLIPSELINK_VERSION             2.7.4
+ENV ECLIPSELINK_DOWNLOAD_URL        https://repo1.maven.org/maven2/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
+ENV ECLIPSELINK_PATH                modules/system/layers/base/org/eclipse/persistence/main
+ENV ECLIPSELINK_SHA256              ca7cecafa370b421bf1e34d20a41c8c8a2023c5caf7f206e74b3fdda03330dcd
 
-ENV WAIT_FOR_IT_COMMIT_HASH			9995b721327eac7a88f0dce314ea074d5169634f
-ENV WAIT_FOR_IT_DOWNLOAD_URL		https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
-ENV WAIT_FOR_IT_SHA256				3f3790f899f53d1a10947f0b992b122a358ffa34997d8c0fe126a02bba806917
+ENV WAIT_FOR_IT_COMMIT_HASH         9995b721327eac7a88f0dce314ea074d5169634f
+ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
+ENV WAIT_FOR_IT_SHA256              3f3790f899f53d1a10947f0b992b122a358ffa34997d8c0fe126a02bba806917
 
-ENV WILDFLY_HOME					/opt/jboss/wildfly
-ENV ADMIN_USER						admin
-ENV JBOSS_CLI						${WILDFLY_HOME}/bin/jboss-cli.sh
-ENV DEBUGGING						false
+ENV WILDFLY_HOME                    /opt/jboss/wildfly
+ENV ADMIN_USER                      admin
+ENV JBOSS_CLI                       ${WILDFLY_HOME}/bin/jboss-cli.sh
+ENV DEBUGGING                       false
 
-ENV ENTRY_JBOSS_BATCH				/entrypoint-jboss-batch
-ENV ENTRY_DEPLOYMENTS				/entrypoint-deployments
-ENV READY_PATH						/opt/jboss/ready
+ENV ENTRY_JBOSS_BATCH               /entrypoint-jboss-batch
+ENV ENTRY_DEPLOYMENTS               /entrypoint-deployments
+ENV READY_PATH                      /opt/jboss/ready
 
 # create folders and permissions
 USER root
@@ -87,11 +87,11 @@ RUN echo "> 3. install mysql-connector" && curl -Lso mysql-connector-java-${MYSQ
         echo '    echo "========================================================================="'; \
         echo '    if [ -z "${NO_ADMIN}" ]; then'; \
         echo '        WILDFLY_PASS=${WILDFLY_PASS:-$(tr -cd "[:alnum:]" < /dev/urandom | head -c20)}'; \
-        echo '        '${WILDFLY_HOME}'/bin/add-user.sh '${ADMIN_USER}' ${WILDFLY_PASS} && \ '; \
-        echo '        echo "  You can configure this WildFly-Server using:" && \ '; \
+        echo '        '${WILDFLY_HOME}'/bin/add-user.sh '${ADMIN_USER}' ${WILDFLY_PASS} && \'; \
+        echo '        echo "  You can configure this WildFly-Server using:" && \'; \
         echo '        echo "  '${ADMIN_USER}':${WILDFLY_PASS}"'; \
         echo '    else'; \
-        echo '        echo "  You can NOT configure this WildFly-Server" && \ '; \
+        echo '        echo "  You can NOT configure this WildFly-Server" && \'; \
         echo '        echo "  because no admin-user was created."'; \
         echo '    fi'; \
         echo '    echo "========================================================================="'; \
@@ -112,8 +112,9 @@ RUN echo "> 3. install mysql-connector" && curl -Lso mysql-connector-java-${MYSQ
         echo; \
         echo './create_wildfly_admin.sh'; \
         echo; \
-        echo 'BATCH_FILES=$(comm -23 <(ls '${ENTRY_JBOSS_BATCH}' 2> /dev/null | grep -v .completed) \ '; \
+        echo 'BATCH_FILES=$(comm -23 <(ls '${ENTRY_JBOSS_BATCH}' 2> /dev/null | grep -v .completed) \'; \
         echo '    <(ls '${READY_PATH}' 2> /dev/null | grep .completed | sed "s/\.completed$//"))'; \
+        echo 'echo "  ${BATCH_FILES}"'; \
         echo; \
         echo 'echo "  $(echo ${BATCH_FILES} | wc -w) cli-file(s) found to execute with jboss-cli.sh"'; \
         echo; \
