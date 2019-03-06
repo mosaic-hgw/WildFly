@@ -1,4 +1,4 @@
-FROM jboss/wildfly:15.0.1.Final
+FROM jboss/wildfly:16.0.0.Final
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector
@@ -54,22 +54,28 @@ USER root
 RUN echo "> 1. create folders and permissions" && \
 	mkdir ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
 	chmod go+w ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
-	chown jboss:jboss ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
-	echo "> 2. install which" && [ "$(which which 2>&1 /dev/null)" != "" ] && \
-	yum -y install which || echo "  'which' already installed"
-USER jboss
+	chown jboss:jboss ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS}  && \
+	\
+	echo "> 2. install which" && \
+	[ "$(which which 2>&1 /dev/null)" != "" ] && yum -y install which || echo "  'which' already installed"
 
 # download files and create scripts
-RUN echo "> 3. install mysql-connector" && curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
+USER jboss
+RUN echo "> 3. install mysql-connector" && \
+	curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
 	(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep ${MYSQL_CONNECTOR_SHA256} || (>&2 echo "sha256sum failed $(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar)" && exit 1)) && \
-
-	echo "> 4. install mariadb-connector" && curl -Lso mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${MARIADB_CONNECTOR_DOWNLOAD_URL} && \
+	\
+	echo "> 4. install mariadb-connector" && \
+	curl -Lso mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${MARIADB_CONNECTOR_DOWNLOAD_URL} && \
 	(sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar | grep ${MARIADB_CONNECTOR_SHA256} || (>&2 echo "sha256sum failed $(sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar)" && exit 1)) && \
-
-	echo "> 5. install wait-for-it-script" && curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
+	\
+	echo "> 5. install wait-for-it-script" && \
+	curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
 	(sha256sum wait-for-it.sh | grep ${WAIT_FOR_IT_SHA256} || (>&2 echo "sha256sum failed $(sha256sum wait-for-it.sh)" && exit 1)) && \
-
-	echo "> 6. install eclipslink" && curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
+	chmod +x wait-for-it.sh && \
+	\
+	echo "> 6. install eclipslink" && \
+	curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
 	(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA256} || (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
 	sed -i "s/<\/resources>/\n \
 		<resource-root path=\"eclipselink-${ECLIPSELINK_VERSION}.jar\">\n \
@@ -79,7 +85,7 @@ RUN echo "> 3. install mysql-connector" && curl -Lso mysql-connector-java-${MYSQ
 		<\/resource-root>\n \
 	<\/resources>/" ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/module.xml && \
 	chown -R jboss:jboss ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
-
+	\
     echo "> 7. create script create_wildfly_admin.sh" && { \
         echo '#!/bin/bash'; \
         echo; \
@@ -98,7 +104,8 @@ RUN echo "> 3. install mysql-connector" && curl -Lso mysql-connector-java-${MYSQ
         echo '    touch '${READY_PATH}'/admin.created'; \
         echo 'fi'; \
     } > create_wildfly_admin.sh && \
-
+    chmod +x create_wildfly_admin.sh && \
+	\
     echo "> 8. create script wildfly_started.sh" && { \
         echo '#!/bin/bash'; \
         echo; \
@@ -106,7 +113,8 @@ RUN echo "> 3. install mysql-connector" && curl -Lso mysql-connector-java-${MYSQ
         echo $JBOSS_CLI' -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running && exit 0'; \
         echo 'exit 1'; \
     } > wildfly_started.sh && \
-
+    chmod +x wildfly_started.sh && \
+	\
     echo "> 9. create script run.sh" && { \
         echo '#!/bin/bash'; \
         echo; \
@@ -145,7 +153,8 @@ RUN echo "> 3. install mysql-connector" && curl -Lso mysql-connector-java-${MYSQ
         echo; \
         echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${DEBUGGING}" == "true" ] && echo "--debug")'; \
     } > run.sh && \
-	echo "> 10. change script-permissions" && chmod +x wait-for-it.sh create_wildfly_admin.sh wildfly_started.sh run.sh
+	echo "> 10. change script-permissions" && \
+	chmod +x run.sh
 
 # prepare wildfly
 RUN	echo "> 11. prepare wildfly" && \
@@ -164,7 +173,7 @@ RUN	echo "> 11. prepare wildfly" && \
 EXPOSE 8080 9990 8443 9993 8787
 
 # check if wildfly is running
-HEALTHCHECK --interval=5s --timeout=3s --retries=10 CMD ["./wildfly_started.sh"]
+HEALTHCHECK CMD ./wildfly_started.sh
 
 # run wildfly
 CMD ["./run.sh"]
