@@ -8,7 +8,10 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 
 
 ### Tags
-* `15.0.1.Final-20190204`, `15.0.1.Final`, `15`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `16.0.0.Final-20190306`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     jboss/wildfly:16.0.0.Final
+  - fixed:    Docker-Healthcheck
+* `15.0.1.Final-20190204`, `15.0.1.Final`, `15`
   - from:     jboss/wildfly:15.0.1.Final
   - updated:  mySQL-connector to v8.0.15
   - updated:  mariaDB-connector to v2.4.0
@@ -21,35 +24,35 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
   - improved: which-installation
 * `13.0.0.Final-20180830`, `13.0.0.Final`, `13`
   - from:     jboss/wildfly:13.0.0.Final
-  - updated:  mySQL-connector to 8.0.11
-  - updated:  mariaDB-connector to 2.2.6
-  - updated:  EclipseLink to 2.7.3
+  - updated:  mySQL-connector to v8.0.11
+  - updated:  mariaDB-connector to v2.2.6
+  - updated:  EclipseLink to v2.7.3
   - installed:'which' for wait-for-it.sh
 * `12.0.0.Final-20180515`, `12.0.0.Final`
-  - updated:  mySQL-connector to 5.1.46
-  - updated:  mariaDB-connector to 2.2.4
+  - updated:  mySQL-connector to v5.1.46
+  - updated:  mariaDB-connector to v2.2.4
   - fixed:    creating admin-user
 * `12.0.0.Final-20180307`
   - from:     jboss/wildfly:12.0.0.Final
-  - updated:  mariaDB-connector to 2.2.2
-  - updated:  EclipseLink to 2.7.1
+  - updated:  mariaDB-connector to v2.2.2
+  - updated:  EclipseLink to v2.7.1
 * `11.0.0.Final-20171204`
   - from:     jboss/wildfly:11.0.0.Final
-  - updated:  mySQL-connector to 5.1.45
-  - updated:  mariaDB-connector to 2.2.0
-  - updated:  EclipseLink to 2.7.0
+  - updated:  mySQL-connector to v5.1.45
+  - updated:  mariaDB-connector to v2.2.0
+  - updated:  EclipseLink to v2.7.0
   - updated:  wait-for-it.sh from Jul 20, 2017
 * `10.1.0.Final-20170707`
-  - updated:  mySQL-connector to 5.1.42
+  - updated:  mySQL-connector to v5.1.42
   - added:    mariaDB-connector 2.0.3
   - improved: changed all sha1sum to sha256sum
 * `10.1.0.Final-20170418`
-  - updated:  mySQL-connector to 5.1.41
-  - updated:  EclipseLink to 2.6.4
+  - updated:  mySQL-connector to v5.1.41
+  - updated:  EclipseLink to v2.6.4
   - added:    script to check wildfly is complete started
   - added:    Docker-Healthcheck
 * `10.1.0.Final-20160930`
-  - updated:  mySQL-connector to 5.1.40
+  - updated:  mySQL-connector to v5.1.40
   - added:    script to create admin-user with given or random password at first run
   - improved: jboss-completed-files moved into container
 * `10.1.0.Final-20160913`
