@@ -1,4 +1,4 @@
-FROM jboss/wildfly:16.0.0.Final
+FROM jboss/wildfly:18.0.1.Final
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector
@@ -23,18 +23,18 @@ FROM jboss/wildfly:16.0.0.Final
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 # variables
-ENV MYSQL_CONNECTOR_VERSION         8.0.15
+ENV MYSQL_CONNECTOR_VERSION         8.0.18
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL    http://central.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256          8ae9fca44d84506399d7f806a7896e4e056daa31571ec67c645bdcacfa434f58
+ENV MYSQL_CONNECTOR_SHA256          562cff6acda7f6a537b430795e32ab28e439936446d5443f64cdcf6a0742e686
 
-ENV MARIADB_CONNECTOR_VERSION       2.4.0
+ENV MARIADB_CONNECTOR_VERSION       2.5.2
 ENV MARIADB_CONNECTOR_DOWNLOAD_URL  https://downloads.mariadb.com/Connectors/java/connector-java-${MARIADB_CONNECTOR_VERSION}/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar
-ENV MARIADB_CONNECTOR_SHA256        1b7e3ab5b940df96894bcab56b7750559754ed0ee2b063338707eda33e8c66a5
+ENV MARIADB_CONNECTOR_SHA256        e8d2c776003c6b9d28a7b5ee205811081048468113b8b36ffc9b27a818843bfd
 
-ENV ECLIPSELINK_VERSION             2.7.4
+ENV ECLIPSELINK_VERSION             2.7.5
 ENV ECLIPSELINK_DOWNLOAD_URL        https://repo1.maven.org/maven2/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
 ENV ECLIPSELINK_PATH                modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA256              ca7cecafa370b421bf1e34d20a41c8c8a2023c5caf7f206e74b3fdda03330dcd
+ENV ECLIPSELINK_SHA256              c7ca3d24b5c2537ad206c86255ff68af28c19a7b8c355c5d64ceb4e1384a0334
 
 ENV WAIT_FOR_IT_COMMIT_HASH         9995b721327eac7a88f0dce314ea074d5169634f
 ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
@@ -52,40 +52,40 @@ ENV READY_PATH                      /opt/jboss/ready
 # create folders and permissions
 USER root
 RUN echo "> 1. create folders and permissions" && \
-	mkdir ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
-	chmod go+w ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
-	chown jboss:jboss ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS}  && \
-	\
-	echo "> 2. install which" && \
-	[ "$(which which 2>&1 /dev/null)" != "" ] && yum -y install which || echo "  'which' already installed"
+    mkdir ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
+    chmod go+w ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
+    chown jboss:jboss ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS}  && \
+    \
+    echo "> 2. install which" && \
+    [ "$(which which 2>&1 /dev/null)" != "" ] && yum -y install which || echo "  'which' already installed"
 
 # download files and create scripts
 USER jboss
 RUN echo "> 3. install mysql-connector" && \
-	curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
-	(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep ${MYSQL_CONNECTOR_SHA256} || (>&2 echo "sha256sum failed $(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar)" && exit 1)) && \
-	\
-	echo "> 4. install mariadb-connector" && \
-	curl -Lso mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${MARIADB_CONNECTOR_DOWNLOAD_URL} && \
-	(sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar | grep ${MARIADB_CONNECTOR_SHA256} || (>&2 echo "sha256sum failed $(sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar)" && exit 1)) && \
-	\
-	echo "> 5. install wait-for-it-script" && \
-	curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
-	(sha256sum wait-for-it.sh | grep ${WAIT_FOR_IT_SHA256} || (>&2 echo "sha256sum failed $(sha256sum wait-for-it.sh)" && exit 1)) && \
-	chmod +x wait-for-it.sh && \
-	\
-	echo "> 6. install eclipslink" && \
-	curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
-	(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA256} || (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
-	sed -i "s/<\/resources>/\n \
-		<resource-root path=\"eclipselink-${ECLIPSELINK_VERSION}.jar\">\n \
-		    <filter>\n \
-		        <exclude path=\"javax\/**\" \/>\n \
-		    <\/filter>\n \
-		<\/resource-root>\n \
-	<\/resources>/" ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/module.xml && \
-	chown -R jboss:jboss ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
-	\
+    curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
+    (sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep ${MYSQL_CONNECTOR_SHA256} || (>&2 echo "sha256sum failed $(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar)" && exit 1)) && \
+    \
+    echo "> 4. install mariadb-connector" && \
+    curl -Lso mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${MARIADB_CONNECTOR_DOWNLOAD_URL} && \
+    (sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar | grep ${MARIADB_CONNECTOR_SHA256} || (>&2 echo "sha256sum failed $(sha256sum mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar)" && exit 1)) && \
+    \
+    echo "> 5. install wait-for-it-script" && \
+    curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
+    (sha256sum wait-for-it.sh | grep ${WAIT_FOR_IT_SHA256} || (>&2 echo "sha256sum failed $(sha256sum wait-for-it.sh)" && exit 1)) && \
+    chmod +x wait-for-it.sh && \
+    \
+    echo "> 6. install eclipslink" && \
+    curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
+    (sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep ${ECLIPSELINK_SHA256} || (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
+    sed -i "s/<\/resources>/\n \
+        <resource-root path=\"eclipselink-${ECLIPSELINK_VERSION}.jar\">\n \
+            <filter>\n \
+                <exclude path=\"javax\/**\" \/>\n \
+            <\/filter>\n \
+        <\/resource-root>\n \
+    <\/resources>/" ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/module.xml && \
+    chown -R jboss:jboss ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
+    \
     echo "> 7. create script create_wildfly_admin.sh" && { \
         echo '#!/bin/bash'; \
         echo; \
@@ -153,21 +153,21 @@ RUN echo "> 3. install mysql-connector" && \
         echo; \
         echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${DEBUGGING}" == "true" ] && echo "--debug")'; \
     } > run.sh && \
-	echo "> 10. change script-permissions" && \
-	chmod +x run.sh
+    echo "> 10. change script-permissions" && \
+    chmod +x run.sh
 
 # prepare wildfly
-RUN	echo "> 11. prepare wildfly" && \
-	cat run.sh && \
-	${WILDFLY_HOME}/bin/standalone.sh & \
-	until `./wildfly_started.sh`; do sleep 1; done ; \
-	$JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=entrypoint:add(scan-interval=5000,path=${ENTRY_DEPLOYMENTS})" && \
-	$JBOSS_CLI -c "module add --name=com.mysql --resources=/opt/jboss/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" && \
-	$JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-class-name=com.mysql.cj.jdbc.Driver)" && \
-	$JBOSS_CLI -c "module add --name=com.mariadb --resources=/opt/jboss/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" && \
-	$JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mariadb:add(driver-name=mariadb,driver-module-name=com.mariadb)" && \
-	$JBOSS_CLI -c ":shutdown" && \
-	rm -rf mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/*
+RUN echo "> 11. prepare wildfly" && \
+    cat run.sh && \
+    ${WILDFLY_HOME}/bin/standalone.sh & \
+    until `./wildfly_started.sh`; do sleep 1; done ; \
+    $JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=entrypoint:add(scan-interval=5000,path=${ENTRY_DEPLOYMENTS})" && \
+    $JBOSS_CLI -c "module add --name=com.mysql --resources=/opt/jboss/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" && \
+    $JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-class-name=com.mysql.cj.jdbc.Driver)" && \
+    $JBOSS_CLI -c "module add --name=com.mariadb --resources=/opt/jboss/mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" && \
+    $JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mariadb:add(driver-name=mariadb,driver-module-name=com.mariadb)" && \
+    $JBOSS_CLI -c ":shutdown" && \
+    rm -rf mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar mariadb-java-client-${MARIADB_CONNECTOR_VERSION}.jar ${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/*
 
 # ports
 EXPOSE 8080 9990 8443 9993 8787
