@@ -16,7 +16,7 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * `16.0.0.Final-20190306`
   - from:     jboss/wildfly:16.0.0.Final
   - fixed:    Docker-Healthcheck
-* `15.0.1.Final-20190204`, `15.0.1.Final`, `15`
+* `15.0.1.Final-20190204`, `15.0.1.Final`, `15` (deleted on 2020-01-29)
   - from:     jboss/wildfly:15.0.1.Final
   - updated:  mySQL-connector to v8.0.15
   - updated:  mariaDB-connector to v2.4.0
