@@ -5,7 +5,7 @@
   - updated:  mySQL-connector to v8.0.21
   - improved: separeted script for jboss-batches
   - removed:  mariaDB-connector
-* `19.1.0.Final-20200602`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `19.1.0.Final-20200602`
   - from:     jboss/wildfly:19.1.0.Final
   - added:    labels like [opencontainer.org](https://github.com/opencontainers/image-spec/blob/master/annotations.md)
   - updated:  EclipseLink to v2.7.7
