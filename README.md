@@ -8,11 +8,12 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 
 
 ### Last changes
-* `19.1.0.Final-20200602`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
-  - from:     jboss/wildfly:19.1.0.Final
-  - added:    labels like [opencontainers.org](https://github.com/opencontainers/image-spec/blob/master/annotations.md)
-  - updated:  EclipseLink to v2.7.7
-  - updated:  mySQL-connector to v8.0.20
+* `20.0.1.Final-20201008`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     alpine:3.12
+  - updated:  WildFly 20.0.1.Final
+  - updated:  mySQL-connector to v8.0.21
+  - improved: separeted script for jboss-batches
+  - removed:  mariaDB-connector
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
 ### Run Image
