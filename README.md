@@ -6,9 +6,10 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
 ## Why should you use this WildFly-Image?
-* This images are based on Alpine a minimalist Linux based container image.
-* This image is a non-root container images. This add an extra layer of security and are generally recommended for production environments.
-* This image can be started directly without building an own image first. Of course you can still build your own image.
+* This images are based on Alpine, a minimalist Linux based container image.
+* This image is a non-root container image. This adds an extra layer of security and is generally recommended for production environments.
+* This image can be started directly without building your own image first. Of course, you can still build your own image.
+
 
 ## About Health-Check-Strategies
 There are 3 strategies built into this docker image.
