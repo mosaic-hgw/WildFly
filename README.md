@@ -13,11 +13,11 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 ## About Health-Check-Strategies
 There are 3 strategies built into this docker image.
 
-* Microprofile-Health
+* Microprofile-Health<br>
   This is the default strategy and only works if the WILDFLY_PASS variable is set. Then the WildFly management automatically checks all deployments that have the microprofile installed (see https://microprofile.io/project/eclipse/microprofile-health).
-* URL-check
+* URL-check<br>
   For this strategy at least one accessible URL must be specified as ENV-variable DEPLOYMENT_URL. If a URL is not reachable or does not return the HTTP status code 200, the health status is set to "unhealthly". This strategy can be combined with Microprofile-Health.
-* Running-Deployments
+* Running-Deployments<br>
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ### Last changes
