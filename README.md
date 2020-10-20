@@ -5,15 +5,27 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 * [gPAS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/pseudonymverwaltung-gpas.html) (generic Pseudonym Administration Service)
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
+## Why should you use this WildFly-Image?
+* This images are based on Alpine a minimalist Linux based container image.
+* This image is a non-root container images. This add an extra layer of security and are generally recommended for production environments.
+* This image can be started directly without building an own image first. Of course you can still build your own image.
 
+## About Health-Check-Strategies
+There are 3 strategies built into this docker image.
+
+* Microprofile-Health
+  This is the default strategy and only works if the WILDFLY_PASS variable is set. Then the WildFly management automatically checks all deployments that have the microprofile installed (see https://microprofile.io/project/eclipse/microprofile-health).
+* URL-check
+  For this strategy at least one accessible URL must be specified as ENV-variable DEPLOYMENT_URL. If a URL is not reachable or does not return the HTTP status code 200, the health status is set to "unhealthly". This strategy can be combined with Microprofile-Health.
+* Running-Deployments
+  This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ### Last changes
-* `20.0.1.Final-20201008`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
-  - from:     alpine:3.12
-  - updated:  WildFly 20.0.1.Final
-  - updated:  mySQL-connector to v8.0.21
-  - improved: separeted script for jboss-batches
-  - removed:  mariaDB-connector
+* `21.0.0.Final-20201020`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - added:    KeyCloak-Client 11.0.2
+  - updated:  WildFly to 21.0.0.Final
+  - updated:  mySQL-connector to v8.0.22
+  - improved: cli-filter for jboss-cli
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
 ### Run Image
