@@ -1,5 +1,5 @@
 # WildFly Docker Image
-This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [jboss/wildfly](https://hub.docker.com/r/jboss/wildfly/) and prepared for the tools of the MOSAIC-project (but can also be used for all other projects):
+This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [alpine](https://hub.docker.com/_/alpine) and prepared for the tools of the MOSAIC-project (but can also be used for all other projects):
 
 * [E-PIX](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/id-management-e-pix.html) (Enterprise Patient Identifier Crossreferencing)
 * [gPAS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/pseudonymverwaltung-gpas.html) (generic Pseudonym Administration Service)
