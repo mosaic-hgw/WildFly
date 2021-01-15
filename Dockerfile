@@ -1,9 +1,9 @@
-FROM alpine:3.12
+FROM alpine:3.13
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector and Healthcheck
 # __
-# Copyright (C) 2009 - 2020 Institute for Community Medicine
+# Copyright (C) 2009 - 2021 Institute for Community Medicine
 # University Medicine of Greifswald - mosaic-project@uni-greifswald.de
 # __
 # This program is free software: you can redistribute it and/or modify
@@ -25,29 +25,29 @@ MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 # variables
 ENV MAVEN_REPOSITORY                https://repo1.maven.org/maven2
 
-ENV WILDFLY_VERSION                 21.0.0.Final
+ENV WILDFLY_VERSION                 22.0.0.Final
 ENV WILDFLY_DOWNLOAD_URL            https://download.jboss.org/wildfly/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz
-ENV WILDFLY_SHA256                  5454dc750c06fd052457d32f5a7ba352b2fb11602fd79f4f1789046d32da0d9f
+ENV WILDFLY_SHA256                  af5381b54d426ee12c52d90468cf0e4d0ee0ac1d1734ff63a6d2b375953600f9
 
 ENV MYSQL_CONNECTOR_VERSION         8.0.22
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL    ${MAVEN_REPOSITORY}/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
 ENV MYSQL_CONNECTOR_SHA256          5019defbd12316295e97a6e88f2a9b07f118345a4e982710bba232e499b22f4f
 
-ENV ECLIPSELINK_VERSION             2.7.7
+ENV ECLIPSELINK_VERSION             2.7.8
 ENV ECLIPSELINK_DOWNLOAD_URL        ${MAVEN_REPOSITORY}/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
 ENV ECLIPSELINK_PATH                modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA256              5225a9862205612c76f10259fce17241f264619fba299a5fd345cd950e038254
+ENV ECLIPSELINK_SHA256              4f0cf067c9e9fd28f600f4e0c2b97fa976a6d3ee1548e931be81751aecafc243
 
 ENV WAIT_FOR_IT_COMMIT_HASH         ed77b63706ea721766a62ff22d3a251d8b4a6a30
 ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA256              2ea7475e07674e4f6c1093b4ad6b0d8cbbc6f9c65c73902fb70861aa66a6fbc0
 
-ENV KEYCLOAK_VERSION                11.0.2
-ENV KEYCLOAK_DOWNLOAD_URL           https://downloads.jboss.org/keycloak/${KEYCLOAK_VERSION}/adapters/keycloak-oidc/keycloak-wildfly-adapter-dist-${KEYCLOAK_VERSION}.tar.gz
-ENV KEYCLOAK_SHA256                 6268b1e36810e1a8c19d74fd48d6e4cf485a6b45f5ddf7475e98693e513fa769
+ENV KEYCLOAK_VERSION                12.0.1
+ENV KEYCLOAK_DOWNLOAD_URL           https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-oidc-wildfly-adapter-${KEYCLOAK_VERSION}.tar.gz
+ENV KEYCLOAK_SHA256                 8f2e14f81eb30c9a36646fc1b8c288e407000805365df284106358b9d4312071
 
 ENV JAVA_VERSION                    11
-ENV JAVA_HOME                       /usr/lib/jvm/default-jvm/
+ENV JAVA_HOME                       /usr/lib/jvm/zulu11-ca
 
 ENV HOME                            /opt/jboss
 ENV WILDFLY_HOME                    /opt/jboss/wildfly
@@ -59,11 +59,12 @@ ENV LAUNCH_JBOSS_IN_BACKGROUND      true
 
 ENV ENTRY_JBOSS_BATCH               /entrypoint-jboss-batch
 ENV ENTRY_DEPLOYMENTS               /entrypoint-deployments
+ENV ENTRY_WILDFLY_LOGS				/entrypoint-wildfly-logs
 
 # annotations
 LABEL org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "21.0.0.Final-20201020" \
+      org.opencontainers.image.version     = "22.0.0.Final-20210115" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
@@ -79,8 +80,10 @@ RUN echo && echo && \
 	(apk update --quiet --no-cache &> install.log || (>&2 cat install.log && echo && exit 1)) && \
 	(apk upgrade --quiet --no-cache &> install.log || (>&2 cat install.log && echo && exit 1)) && \
 	\
-	echo "  |____ 2. install missing packages (curl, bash, openjdk)" && \
-	(apk add --quiet --no-cache curl bash openjdk${JAVA_VERSION}-jre --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community &> install.log || (>&2 cat install.log && echo && exit 1)) && \
+	echo "  |____ 2. install missing packages (curl, bash, jp, jre)" && \
+	(apk add --quiet --no-cache curl bash jq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community &> install.log || (>&2 cat install.log && echo && exit 1)) && \
+	(wget --quiet https://cdn.azul.com/public_keys/alpine-signing@azul.com-5d5dc44c.rsa.pub -P /etc/apk/keys/ &> install.log || (>&2 cat install.log && echo && exit 1)) && \
+	(apk add --quiet --no-cache zulu${JAVA_VERSION}-jre --repository=https://repos.azul.com/zulu/alpine &> install.log || (>&2 cat install.log && echo && exit 1)) && \
 	\
 	echo "  |____ 3. create user and group" && \
 	addgroup -g 1000 -S jboss && adduser -u 1000 -G jboss -h ${HOME} -S jboss && chmod 755 ${HOME} && \
@@ -188,7 +191,8 @@ RUN echo && echo && \
         echo '    while read DEPLOYMENT_URL'; \
         echo '    do'; \
         echo '        [ -z ${DEPLOYMENT_URL} ] && continue'; \
-        echo -e '        URL_STATE=$(curl -sI ${DEPLOYMENT_URL} | head -n 1)'; \
+        echo -e '        URL_STATE=$(curl -sNIX GET ${DEPLOYMENT_URL} | head -n 1)'; \
+        echo '        echo " > ${DEPLOYMENT_URL}: ${URL_STATE}"'; \
         echo '        if [[ $URL_STATE != *"200"* ]]'; \
         echo '        then'; \
         echo -e '            echo "url \x27${DEPLOYMENT_URL}\x27 has returned \x27${URL_STATE//[$\x27\\t\\r\\n\x27]}\x27, expected 200"'; \
@@ -202,11 +206,11 @@ RUN echo && echo && \
         echo 'then'; \
         echo '    echo "using wildfly-password"'; \
         echo '    MGNT_URL="http://${ADMIN_USER}:${WILDFLY_PASS}@localhost:9990/management"'; \
-        echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | python2 -c "import sys,json; print json.load(sys.stdin)[\x27deployment\x27].keys();" 2>/dev/null)'; \
-        echo -e '    DEPLOYMENTS=$(echo $DEPLOYMENTS | sed -r "s/\[?u\x27([^\x27]+)\x27(, |\])/\1\\n/g")'; \
+        echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | jq ".deployment | keys[]" | sed "s/\"//g")'; \
         echo '    while read DEPLOYMENT'; \
         echo '    do'; \
         echo '        DEPLOYMENT_STATE=$(curl -sk --digest "${MGNT_URL}/deployment/${DEPLOYMENT}?operation=attribute&name=status")'; \
+        echo '        echo " > ${DEPLOYMENT}: ${DEPLOYMENT_STATE}"'; \
         echo '        if [[ $DEPLOYMENT_STATE == *"FAILED"* ]]'; \
         echo '        then'; \
         echo '            echo "deployment ${DEPLOYMENT} failed"'; \
@@ -320,11 +324,12 @@ RUN echo && echo && \
 		install.log \
 		mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar \
 		${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/* && \
-    chown jboss -R wildfly/standalone && \
+	ln -s ${WILDFLY_HOME}/standalone/log ${ENTRY_WILDFLY_LOGS} && \
+    chown jboss -R wildfly/standalone ${ENTRY_WILDFLY_LOGS} && \
     \
     echo "  |____ 11. create and show textfile 'versions'" && \
 	{ \
-		echo "  Distribution            : $(cat /etc/os-release | grep 'PRETTY_NAME' | cut -d'"' -f2)"; \
+		echo "  Distribution            : $(cat /etc/os-release | grep -E '^NAME' | cut -d'"' -f2) v$(cat /etc/os-release | grep 'VERSION_ID' | cut -d'=' -f2)"; \
 		echo "  Java                    : $(java -version 2>&1 | head -n1 | sed -r 's/^.+"(.+)".+$/\1/' | cat)"; \
 		echo "  WildFly                 : $(${WILDFLY_HOME}/bin/standalone.sh -version --admin-only | grep WildFly | sed -r 's/^[^(]+ ([0-9\.]+Final).+$/\1/' | cat)"; \
 		echo "  MySQL-Connector         : ${MYSQL_CONNECTOR_VERSION}"; \
