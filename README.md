@@ -22,11 +22,11 @@ There are 3 strategies built into this docker image.
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ### Last changes
-* `21.0.0.Final-20201020`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
-  - added:    KeyCloak-Client 11.0.2
-  - updated:  WildFly to 21.0.0.Final
-  - updated:  mySQL-connector to v8.0.22
-  - improved: cli-filter for jboss-cli
+* `22.0.0.Final-20210115`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     alpine:3.13
+  - updated:  WildFly to 22.0.0.Final
+  - updated:  EclipseLink to v2.7.8
+  - updated:  KeyCloak-Client 12.0.1
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
 ### Run Image
