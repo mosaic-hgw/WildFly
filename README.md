@@ -1,3 +1,5 @@
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 # WildFly Docker Image
 This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [alpine](https://hub.docker.com/_/alpine) and prepared for the tools of the MOSAIC-project (but can also be used for all other projects):
 
