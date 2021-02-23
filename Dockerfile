@@ -1,4 +1,4 @@
-FROM alpine:3.13
+FROM alpine:3.13.2
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector and Healthcheck
@@ -25,13 +25,13 @@ MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 # variables
 ENV MAVEN_REPOSITORY                https://repo1.maven.org/maven2
 
-ENV WILDFLY_VERSION                 22.0.0.Final
+ENV WILDFLY_VERSION                 22.0.1.Final
 ENV WILDFLY_DOWNLOAD_URL            https://download.jboss.org/wildfly/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz
-ENV WILDFLY_SHA256                  af5381b54d426ee12c52d90468cf0e4d0ee0ac1d1734ff63a6d2b375953600f9
+ENV WILDFLY_SHA256                  08d1e420331d0b6ad6c36a4dd782a110152cabfa23439e6ecd9a7c4d50bffd01
 
-ENV MYSQL_CONNECTOR_VERSION         8.0.22
+ENV MYSQL_CONNECTOR_VERSION         8.0.23
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL    ${MAVEN_REPOSITORY}/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256          5019defbd12316295e97a6e88f2a9b07f118345a4e982710bba232e499b22f4f
+ENV MYSQL_CONNECTOR_SHA256          ff7d5b402afd39c12787471505a33a304103b238ec1b7a44e8936d3329da7535
 
 ENV ECLIPSELINK_VERSION             2.7.8
 ENV ECLIPSELINK_DOWNLOAD_URL        ${MAVEN_REPOSITORY}/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
@@ -42,12 +42,12 @@ ENV WAIT_FOR_IT_COMMIT_HASH         ed77b63706ea721766a62ff22d3a251d8b4a6a30
 ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA256              2ea7475e07674e4f6c1093b4ad6b0d8cbbc6f9c65c73902fb70861aa66a6fbc0
 
-ENV KEYCLOAK_VERSION                12.0.1
+ENV KEYCLOAK_VERSION                12.0.3
 ENV KEYCLOAK_DOWNLOAD_URL           https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-oidc-wildfly-adapter-${KEYCLOAK_VERSION}.tar.gz
-ENV KEYCLOAK_SHA256                 8f2e14f81eb30c9a36646fc1b8c288e407000805365df284106358b9d4312071
+ENV KEYCLOAK_SHA256                 ebd171096e4dd151415b45ec721007ebca5aebcbdaa27393725a5a97c86422f5
 
 ENV JAVA_VERSION                    11
-ENV JAVA_HOME                       /usr/lib/jvm/zulu11-ca
+ENV JAVA_HOME                       /usr/lib/jvm/zulu${JAVA_VERSION}-ca
 
 ENV HOME                            /opt/jboss
 ENV WILDFLY_HOME                    /opt/jboss/wildfly
@@ -64,7 +64,7 @@ ENV ENTRY_WILDFLY_LOGS				/entrypoint-wildfly-logs
 # annotations
 LABEL org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "22.0.0.Final-20210115" \
+      org.opencontainers.image.version     = "22.0.1.Final-20210222" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
