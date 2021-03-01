@@ -1,5 +1,7 @@
 ### Change-History
-* `22.0.1.Final-20210222`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  KeyCloak-Client 12.0.4
+* `22.0.1.Final-20210222`
   - from:     alpine:3.13.2
   - updated:  WildFly to 22.0.1.Final
   - updated:  mySQL-connector to v8.0.23
