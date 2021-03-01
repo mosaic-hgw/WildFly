@@ -42,9 +42,9 @@ ENV WAIT_FOR_IT_COMMIT_HASH         ed77b63706ea721766a62ff22d3a251d8b4a6a30
 ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA256              2ea7475e07674e4f6c1093b4ad6b0d8cbbc6f9c65c73902fb70861aa66a6fbc0
 
-ENV KEYCLOAK_VERSION                12.0.3
+ENV KEYCLOAK_VERSION                12.0.4
 ENV KEYCLOAK_DOWNLOAD_URL           https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-oidc-wildfly-adapter-${KEYCLOAK_VERSION}.tar.gz
-ENV KEYCLOAK_SHA256                 ebd171096e4dd151415b45ec721007ebca5aebcbdaa27393725a5a97c86422f5
+ENV KEYCLOAK_SHA256                 c3a48c74001385bccefa9e5097f9b06b4e2f97af38e5b44ecae2c5ef4bcf28f5
 
 ENV JAVA_VERSION                    11
 ENV JAVA_HOME                       /usr/lib/jvm/zulu${JAVA_VERSION}-ca
@@ -64,7 +64,7 @@ ENV ENTRY_WILDFLY_LOGS				/entrypoint-wildfly-logs
 # annotations
 LABEL org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "22.0.1.Final-20210222" \
+      org.opencontainers.image.version     = "22.0.1.Final-20210301" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
