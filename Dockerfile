@@ -64,7 +64,7 @@ ENV ENTRY_WILDFLY_LOGS				/entrypoint-wildfly-logs
 # annotations
 LABEL org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "22.0.1.Final-20210301" \
+      org.opencontainers.image.version     = "22.0.1.Final-20210309" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
@@ -80,8 +80,8 @@ RUN echo && echo && \
 	(apk update --quiet --no-cache &> install.log || (>&2 cat install.log && echo && exit 1)) && \
 	(apk upgrade --quiet --no-cache &> install.log || (>&2 cat install.log && echo && exit 1)) && \
 	\
-	echo "  |____ 2. install missing packages (curl, bash, jp, jre)" && \
-	(apk add --quiet --no-cache curl bash jq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community &> install.log || (>&2 cat install.log && echo && exit 1)) && \
+	echo "  |____ 2. install missing packages (curl, bash, jre)" && \
+	(apk add --quiet --no-cache curl bash --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community &> install.log || (>&2 cat install.log && echo && exit 1)) && \
 	(wget --quiet https://cdn.azul.com/public_keys/alpine-signing@azul.com-5d5dc44c.rsa.pub -P /etc/apk/keys/ &> install.log || (>&2 cat install.log && echo && exit 1)) && \
 	(apk add --quiet --no-cache zulu${JAVA_VERSION}-jre --repository=https://repos.azul.com/zulu/alpine &> install.log || (>&2 cat install.log && echo && exit 1)) && \
 	\
@@ -206,7 +206,7 @@ RUN echo && echo && \
         echo 'then'; \
         echo '    echo "using wildfly-password"'; \
         echo '    MGNT_URL="http://${ADMIN_USER}:${WILDFLY_PASS}@localhost:9990/management"'; \
-        echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | jq ".deployment | keys[]" | sed "s/\"//g")'; \
+        echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | grep -oE "\"deployment\" ?: ?(null|\{[^}]*\})," | sed -r "s/([\": \{\}]|deployment|null)//g;s/,/\\n/g;s/\\n$//")'; \
         echo '    while read DEPLOYMENT'; \
         echo '    do'; \
         echo '        DEPLOYMENT_STATE=$(curl -sk --digest "${MGNT_URL}/deployment/${DEPLOYMENT}?operation=attribute&name=status")'; \
@@ -329,6 +329,7 @@ RUN echo && echo && \
     \
     echo "  |____ 11. create and show textfile 'versions'" && \
 	{ \
+		echo "  Build-Date              : $(date +%Y-%m-%d)"; \
 		echo "  Distribution            : $(cat /etc/os-release | grep -E '^NAME' | cut -d'"' -f2) v$(cat /etc/os-release | grep 'VERSION_ID' | cut -d'=' -f2)"; \
 		echo "  Java                    : $(java -version 2>&1 | head -n1 | sed -r 's/^.+"(.+)".+$/\1/' | cat)"; \
 		echo "  WildFly                 : $(${WILDFLY_HOME}/bin/standalone.sh -version --admin-only | grep WildFly | sed -r 's/^[^(]+ ([0-9\.]+Final).+$/\1/' | cat)"; \
