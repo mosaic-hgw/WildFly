@@ -206,7 +206,7 @@ RUN echo && echo && \
         echo 'then'; \
         echo '    echo "using wildfly-password"'; \
         echo '    MGNT_URL="http://${ADMIN_USER}:${WILDFLY_PASS}@localhost:9990/management"'; \
-        echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | grep -oE "\"deployment\" ?: ?(null|\{[^}]*\})," | sed -r "s/([\": \{\}]|deployment|null)//g;s/,/\\n/g;s/\\n$//")'; \
+        echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | grep -oE \x27"deployment" ?: ?(null|\{[^}]*\}),\x27 | sed -r \x27s/([": \{\}]|deployment|null)//g;s/,/\\n/g;s/\\n$//\x27)'; \
         echo '    while read DEPLOYMENT'; \
         echo '    do'; \
         echo '        DEPLOYMENT_STATE=$(curl -sk --digest "${MGNT_URL}/deployment/${DEPLOYMENT}?operation=attribute&name=status")'; \
@@ -226,9 +226,12 @@ RUN echo && echo && \
         echo -e '    DEPLOYMENTS=$($JBOSS_CLI -c "deployment-info" | awk \x27{if (NR!=1) {print $1,$NF}}\x27)'; \
         echo '    while read DEPLOYMENT'; \
         echo '    do'; \
-        echo -e '        if [[ $(echo $DEPLOYMENT | awk \x27{print $2}\x27) == *"FAILED"* ]]'; \
+        echo -e '        DEPLOYMENT_NAME=$(echo $DEPLOYMENT | awk \x27{print $1}\x27)'; \
+        echo -e '        DEPLOYMENT_STATE=$(echo $DEPLOYMENT | awk \x27{print $2}\x27)'; \
+        echo '        echo " > ${DEPLOYMENT_NAME}: ${DEPLOYMENT_STATE}"'; \
+        echo '        if [[ ${DEPLOYMENT_STATE} == *"FAILED"* ]]'; \
         echo '        then'; \
-        echo -e '            echo "deployment $(echo $DEPLOYMENT | awk \x27{print $1}\x27) failed"'; \
+        echo '            echo "deployment ${DEPLOYMENT_NAME} failed"'; \
         echo '            exit 1'; \
         echo '        fi'; \
         echo '    done < <(echo "$DEPLOYMENTS")'; \
