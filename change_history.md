@@ -1,6 +1,7 @@
 ### Change-History
-* `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `22.0.1.Final-20210309`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
   - updated:  KeyCloak-Client 12.0.4
+  - removed:  jq (potential vulnerability)
 * `22.0.1.Final-20210222`
   - from:     alpine:3.13.2
   - updated:  WildFly to 22.0.1.Final
