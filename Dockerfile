@@ -1,4 +1,4 @@
-FROM alpine:3.13.2
+FROM debian:10.9-slim
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector and Healthcheck
@@ -25,13 +25,13 @@ MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 # variables
 ENV MAVEN_REPOSITORY                https://repo1.maven.org/maven2
 
-ENV WILDFLY_VERSION                 22.0.1.Final
+ENV WILDFLY_VERSION                 23.0.1.Final
 ENV WILDFLY_DOWNLOAD_URL            https://download.jboss.org/wildfly/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz
-ENV WILDFLY_SHA256                  08d1e420331d0b6ad6c36a4dd782a110152cabfa23439e6ecd9a7c4d50bffd01
+ENV WILDFLY_SHA256                  5622e62bf210f983d1678fd14b2d218b13446ca83a80f04bbe8cdc6ea276945e
 
-ENV MYSQL_CONNECTOR_VERSION         8.0.23
+ENV MYSQL_CONNECTOR_VERSION         8.0.24
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL    ${MAVEN_REPOSITORY}/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256          ff7d5b402afd39c12787471505a33a304103b238ec1b7a44e8936d3329da7535
+ENV MYSQL_CONNECTOR_SHA256          99b52da63d9d31d5494a302f3dbb554b730cc20db1fb09eda64ab0e27c130aab
 
 ENV ECLIPSELINK_VERSION             2.7.8
 ENV ECLIPSELINK_DOWNLOAD_URL        ${MAVEN_REPOSITORY}/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
@@ -47,28 +47,30 @@ ENV KEYCLOAK_DOWNLOAD_URL           https://github.com/keycloak/keycloak/release
 ENV KEYCLOAK_SHA256                 c3a48c74001385bccefa9e5097f9b06b4e2f97af38e5b44ecae2c5ef4bcf28f5
 
 ENV JAVA_VERSION                    11
-ENV JAVA_HOME                       /usr/lib/jvm/zulu${JAVA_VERSION}-ca
 
-ENV HOME                            /opt/jboss
-ENV WILDFLY_HOME                    /opt/jboss/wildfly
+ENV USER                            mosaic
+ENV HOME                            /opt/${USER}
+ENV WILDFLY_HOME                    ${HOME}/wildfly
 ENV ADMIN_USER                      admin
 ENV JBOSS_CLI                       ${WILDFLY_HOME}/bin/jboss-cli.sh
-ENV READY_PATH                      /opt/jboss/ready
+ENV READY_PATH                      ${HOME}/ready
 ENV DEBUGGING                       false
 ENV LAUNCH_JBOSS_IN_BACKGROUND      true
+ENV TEMP_PATH						/opt/temp
 
-ENV ENTRY_JBOSS_BATCH               /entrypoint-jboss-batch
-ENV ENTRY_DEPLOYMENTS               /entrypoint-deployments
+ENV ENTRY_WILDFLY_CLI               /entrypoint-wildfly-cli
+ENV ENTRY_WILDFLY_DEPLOYS           /entrypoint-wildfly-deployments
 ENV ENTRY_WILDFLY_LOGS				/entrypoint-wildfly-logs
 
 # annotations
-LABEL org.opencontainers.image.authors     = "university-medicine greifswald" \
+LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
+      org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "22.0.1.Final-20210309" \
+      org.opencontainers.image.version     = "23.0.1.Final-20210429" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
-      org.opencontainers.image.title       = "wildfly" \
+      org.opencontainers.image.title       = "mosaic-wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
-      org.opencontainers.image.description = "This is a Docker image for the Java application server WildFly. The image is based on image jboss/wildfly and prepared for the tools of the university medicine greifswald (but can also be used for other similar projects)."
+      org.opencontainers.image.description = "This is a Docker image for the Java application server WildFly. The image is based on slim debian-image and prepared for the tools of the university medicine greifswald (but can also be used for other similar projects)."
 
 # create folders and permissions
 RUN echo && echo && \
@@ -77,46 +79,53 @@ RUN echo && echo && \
 	echo "  Create new image by Dockerfile (using $(basename $0))" && \
 	echo "  |" && \
 	echo "  |____ 1. install system-updates" && \
-	(apk update --quiet --no-cache &> install.log || (>&2 cat install.log && echo && exit 1)) && \
-	(apk upgrade --quiet --no-cache &> install.log || (>&2 cat install.log && echo && exit 1)) && \
+	(apt-get update > install.log 2>&1 || (>&2 cat install.log && echo && exit 1)) && \
+	(apt-get upgrade -qqy > install.log 2>&1 || (>&2 cat install.log && echo && exit 1)) && \
+    \
+	echo "  |____ 2. create user and group" && \
+	groupadd --g 1000 ${USER} && \
+	useradd -m -u 1000 -g 1000 -d ${HOME} ${USER} && \
+	chmod 755 ${HOME} && \
+    \
+	echo "  |____ 3. create folders and permissions" && \
+    mkdir ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${TEMP_PATH} && \
+    chmod go+w ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} && \
+    chown ${USER}:${USER} ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} && \
 	\
-	echo "  |____ 2. install missing packages (curl, bash, jre)" && \
-	(apk add --quiet --no-cache curl bash --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community &> install.log || (>&2 cat install.log && echo && exit 1)) && \
-	(wget --quiet https://cdn.azul.com/public_keys/alpine-signing@azul.com-5d5dc44c.rsa.pub -P /etc/apk/keys/ &> install.log || (>&2 cat install.log && echo && exit 1)) && \
-	(apk add --quiet --no-cache zulu${JAVA_VERSION}-jre --repository=https://repos.azul.com/zulu/alpine &> install.log || (>&2 cat install.log && echo && exit 1)) && \
+	echo "  |____ 4. install missing packages (curl, gnupg, jre)" && \
+	cd ${TEMP_PATH}/ && \
+	(( \
+	    apt-get install -y gnupg curl && \
+        apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xB1998361219BD9C9 && \
+        curl -Lso zulu-repo_1.0.0-2_all.deb https://cdn.azul.com/zulu/bin/zulu-repo_1.0.0-2_all.deb && \
+        apt-get install -y ./zulu-repo_1.0.0-2_all.deb && \
+        apt-get update && \
+        apt-get install -y zulu${JAVA_VERSION}-jre \
+    ) > install.log 2>&1 || (>&2 cat install.log && echo && exit 1)) && \
 	\
-	echo "  |____ 3. create user and group" && \
-	addgroup -g 1000 -S jboss && adduser -u 1000 -G jboss -h ${HOME} -S jboss && chmod 755 ${HOME} && \
-	\
-	echo "  |____ 4. create folders and permissions" && \
-    mkdir ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
-    chmod go+w ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \
-    chown jboss:jboss ${ENTRY_JBOSS_BATCH} ${READY_PATH} ${ENTRY_DEPLOYMENTS} && \ 
-	\
-	cd ${HOME} && \
 	echo "  |____ 5. install wildfly" && \
 	echo -n "  |  |____ 1. download " && \
-	(curl -Lso wildfly.tar.gz ${WILDFLY_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1)) && \
+	(curl -Lso wildfly.tar.gz ${WILDFLY_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
 	echo "($(du -h wildfly.tar.gz | cut -f1))" && \
 	echo "  |  |____ 2. check checksum" && \
 	(sha256sum wildfly.tar.gz | grep -q ${WILDFLY_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum wildfly.tar.gz)" && exit 1)) && \
     echo -n "  |  |____ 3. extract " && \
-	tar xf wildfly.tar.gz && \
-	echo "($(du -sh wildfly-$WILDFLY_VERSION | cut -f1))" && \
+    tar xf wildfly.tar.gz && \
+	echo "($(du -sh wildfly-${WILDFLY_VERSION} | cut -f1))" && \
 	echo "  |  |____ 4. move" && \
-	mv wildfly-$WILDFLY_VERSION $WILDFLY_HOME && \
+	mv wildfly-${WILDFLY_VERSION} ${WILDFLY_HOME} && \
 	echo "  |  |____ 5. create server.log" && \
-	mkdir $WILDFLY_HOME/standalone/log && touch $WILDFLY_HOME/standalone/log/server.log && \
+	mkdir ${WILDFLY_HOME}/standalone/log && touch ${WILDFLY_HOME}/standalone/log/server.log && \
 	echo "  |  |____ 6. set permissions" && \
-	chown -R jboss:jboss ${WILDFLY_HOME} && chmod -R g+rw ${WILDFLY_HOME} && \
+	chown -R ${USER}:${USER} ${WILDFLY_HOME} && chmod -R g+rw ${WILDFLY_HOME} && \
 	\
 	echo "  |____ 6. download additional components" && \
 	echo "  |  |____ 1. download mysql-connector" && \
-    curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} && \
+    (curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
     (sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep -q ${MYSQL_CONNECTOR_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar)" && exit 1)) && \
 	\
     echo "  |  |____ 2. download/install eclipslink" && \
-    curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} && \
+    (curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
     (sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep -q ${ECLIPSELINK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
     sed -i "s/<\/resources>/\n \
         <resource-root path=\"eclipselink-${ECLIPSELINK_VERSION}.jar\">\n \
@@ -125,27 +134,25 @@ RUN echo && echo && \
             <\/filter>\n \
         <\/resource-root>\n \
     <\/resources>/" ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/module.xml && \
-    chown -R jboss:jboss ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
+    chown -R ${USER}:${USER} ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
 	\
     echo "  |  |____ 3. download wait-for-it-script" && \
-    curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} && \
-    (sha256sum wait-for-it.sh | grep -q ${WAIT_FOR_IT_SHA256} > /dev/null || (>&2 echo "sha256sum failed $(sha256sum wait-for-it.sh)" && exit 1)) && \
-    chmod +x wait-for-it.sh && \
+    (curl -Lso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
+    (sha256sum ${HOME}/wait-for-it.sh | grep -q ${WAIT_FOR_IT_SHA256} > /dev/null || (>&2 echo "sha256sum failed $(sha256sum ${HOME}/wait-for-it.sh)" && exit 1)) && \
+    chmod +x ${HOME}/wait-for-it.sh && \
 	\
-	cd ${WILDFLY_HOME} && \
 	echo "  |____ 7. install keycloack-client" && \
     echo "  |  |____ 1. download" && \
-	(curl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1)) && \
+	(curl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
 	echo "  |  |____ 2. check checksum" && \
 	(sha256sum keycloak.tar.gz | grep -q ${KEYCLOAK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum keycloak.tar.gz)" && exit 1)) && \
     echo "  |  |____ 3. extract" && \
-	tar xf keycloak.tar.gz && rm -rf keycloak.tar.gz && \
+	tar -xf keycloak.tar.gz -C ${WILDFLY_HOME} && \
 	echo "  |  |____ 4. install" && \
-	($JBOSS_CLI --file=bin/adapter-install-offline.cli > install.log || (>&2 cat install.log && exit 1)) && \
+    ($JBOSS_CLI --file=${WILDFLY_HOME}/bin/adapter-install-offline.cli > install.log 2>&1 || (>&2 cat install.log && exit 1)) && \
 	\
-	cd ${HOME} && \
 	echo "  |____ 8. create bash-scripts" && \
-    echo "  |  |____ 1. create_wildfly_admin.sh" && { \
+	cd ${HOME} && { \
         echo '#!/bin/bash'; \
         echo; \
         echo 'if [ ! -f "'${READY_PATH}'/admin.created" ]; then'; \
@@ -153,30 +160,29 @@ RUN echo && echo && \
         echo '    echo'; \
         echo '    if [ -z "${NO_ADMIN}" ]; then'; \
         echo '        WILDFLY_PASS=${WILDFLY_PASS:-$(tr -cd "[:alnum:]" < /dev/urandom | head -c20)}'; \
-        echo '        ('${WILDFLY_HOME}'/bin/add-user.sh '${ADMIN_USER}' ${WILDFLY_PASS} > create_admin.log && \'; \
-        echo '        echo -e "\033[1;37m  You can configure this WildFly-Server using:\033[0m" && \'; \
-        echo '        echo -e "\033[1;37m  '${ADMIN_USER}':${WILDFLY_PASS}\033[0m") || \'; \
+        echo '        ('${WILDFLY_HOME}'/bin/add-user.sh '${ADMIN_USER}' ${WILDFLY_PASS} > create_admin.log && \\'; \
+        echo '        echo -e "\033[1;37m  You can configure this WildFly-Server using:\033[0m" && \\'; \
+        echo '        echo -e "\033[1;37m  '${ADMIN_USER}':${WILDFLY_PASS}\033[0m") || \\'; \
         echo '        cat create_admin.log'; \
         echo '    else'; \
-        echo '        echo "  You can NOT configure this WildFly-Server" && \'; \
+        echo '        echo "  You can NOT configure this WildFly-Server"'; \
         echo '        echo "  because no admin-user was created."'; \
         echo '    fi'; \
         echo '    echo'; \
         echo '    touch '${READY_PATH}'/admin.created'; \
         echo 'fi'; \
     } > create_wildfly_admin.sh && \
-    chmod +x create_wildfly_admin.sh && \
 	\
-    echo "  |  |____ 2. wildfly_started.sh" && { \
+    { \
         echo '#!/bin/bash'; \
         echo; \
         echo '[ -f '${READY_PATH}'/jboss_cli_block ] && exit 1'; \
         echo '[[ $(curl -sI http://localhost:8080 | head -n 1) != *"200"* ]] && exit 1'; \
         echo 'exit 0'; \
     } > wildfly_started.sh && \
-    chmod +x wildfly_started.sh && \
+    chmod u+x wildfly_started.sh && \
 	\
-    echo "  |  |____ 3. healthcheck.sh" && { \
+    { \
         echo '#!/bin/bash'; \
         echo; \
         echo '[ -f '${READY_PATH}'/jboss_cli_block ] && exit 1'; \
@@ -239,9 +245,8 @@ RUN echo && echo && \
         echo; \
         echo 'exit 0'; \
     } >> healthcheck.sh && \
-    chmod +x healthcheck.sh && \
     \
-    echo "  |  |____ 4. add_jboss_cli.sh" && { \
+    { \
         echo '#!/bin/bash'; \
         echo; \
         echo 'echo "========================================================================="'; \
@@ -252,7 +257,7 @@ RUN echo && echo && \
         echo '    CLI_FILTER="\.cli"'; \
         echo 'fi'; \
         echo; \
-        echo 'BATCH_FILES=$(comm -23 <(ls '${ENTRY_JBOSS_BATCH}' 2> /dev/null | grep -E "$CLI_FILTER$" | grep -v .completed) \'; \
+        echo 'BATCH_FILES=$(comm -23 <(ls '${ENTRY_WILDFLY_CLI}' 2> /dev/null | grep -E "$CLI_FILTER$" | grep -v .completed) \\'; \
         echo '    <(ls '${READY_PATH}' 2> /dev/null | grep .completed | sed "s/\.completed$//"))'; \
         echo; \
         echo 'echo "  $(echo ${BATCH_FILES} | wc -w) cli-file(s) found to execute with jboss-cli.sh"'; \
@@ -268,9 +273,9 @@ RUN echo && echo && \
         echo '    until `'${JBOSS_CLI}' -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running`; do sleep 1; done;'; \
         echo; \
         echo '    for BATCH_FILE in ${BATCH_FILES}; do'; \
-        echo '        if [ -f "'${ENTRY_JBOSS_BATCH}'/${BATCH_FILE}" ]; then'; \
+        echo '        if [ -f "'${ENTRY_WILDFLY_CLI}'/${BATCH_FILE}" ]; then'; \
         echo '            echo "execute jboss-batchfile \"${BATCH_FILE}\""'; \
-        echo '            '${JBOSS_CLI}' -c --properties=env.properties --file='${ENTRY_JBOSS_BATCH}'/${BATCH_FILE}'; \
+        echo '            '${JBOSS_CLI}' -c --properties=env.properties --file='${ENTRY_WILDFLY_CLI}'/${BATCH_FILE}'; \
         echo '            if [ $? -eq 0 ]; then'; \
         echo '                touch '${READY_PATH}'/${BATCH_FILE}.completed'; \
         echo '            else'; \
@@ -286,15 +291,9 @@ RUN echo && echo && \
         echo 'rm -f '${WILDFLY_HOME}'/standalone/configuration/standalone_xml_history/current/*'; \
         echo 'rm -f '${READY_PATH}'/jboss_cli_block env.properties'; \
     } > add_jboss_cli.sh && \
-    chmod +x add_jboss_cli.sh && \
     \
-    echo "  |  |____ 5. run.sh" && { \
+    { \
         echo '#!/bin/bash'; \
-        echo; \
-		echo 'echo "========================================================================="'; \
-        echo 'echo'; \
-        echo 'cat versions'; \
-        echo 'echo'; \
         echo; \
         echo './create_wildfly_admin.sh'; \
         echo; \
@@ -302,44 +301,71 @@ RUN echo && echo && \
         echo 'rm -f '${WILDFLY_HOME}'/standalone/configuration/standalone_xml_history/current/*'; \
         echo; \
         echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${DEBUGGING}" == "true" ] && echo "--debug")'; \
+    } > run_wildfly.sh && \
+    \
+    { \
+        echo '#!/bin/bash'; \
+        echo; \
+		echo 'echo "========================================================================="'; \
+        echo 'echo'; \
+		echo 'echo "This is a Docker image for the Java application server WildFly. The image"'; \
+        echo 'echo "is based on slim debian-image and prepared for the tools of the university"'; \
+        echo 'echo "medicine greifswald (but can also be used for other similar projects)."'; \
+        echo 'echo'; \
+        echo 'echo "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly"'; \
+        echo 'echo'; \
+		echo 'echo "========================================================================="'; \
+        echo 'echo'; \
+        echo 'cat versions'; \
+        echo 'echo'; \
+        echo; \
+        echo '# befor wildfly'; \
+        echo './run_wildfly.sh'; \
+        echo '# after wildfly'; \
     } > run.sh && \
-    chmod +x run.sh && \
     \
     echo "  |____ 9. prepare wildfly" && \
 	echo -n "  |  |____ 1. start app-server" && \
-	(${WILDFLY_HOME}/bin/standalone.sh > install.log &) && \
+	(${WILDFLY_HOME}/bin/standalone.sh > install.log 2>&1 &) && \
 	STARTTIME=$(date +%s) && \
 	TIMEOUT=30 && \
-	(until `./wildfly_started.sh`;do sleep 1;echo -n '.';if [ $(($(date +%s)-STARTTIME)) -ge $TIMEOUT ];then echo;cat install.log;echo;exit 1;fi;done;echo -e "\r  |  |____ 1. start app-server$(printf '%0.s ' {1..30})") && \
-	ENDTIME=$(date +%s) && \
+	(until `./wildfly_started.sh`;do sleep 1;echo -n '.';if [ $(($(date +%s)-STARTTIME)) -ge $TIMEOUT ];then echo;cat install.log;echo;exit 1;fi;done;echo -e "\r  |  |____ 1. start app-server $(printf %-30s '('$(($(date +%s)-STARTTIME))'s)')") && \
 	echo "  |  |____ 2. install mysql-connector" && \
-	($JBOSS_CLI -c "module add --name=com.mysql --resources=/opt/jboss/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" > install.log || (>&2 cat install.log && exit 1)) && \
+	($JBOSS_CLI -c "module add --name=com.mysql --resources=${TEMP_PATH}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" > install.log || (>&2 cat install.log && exit 1)) && \
 	echo "  |  |____ 3. add datasource-driver for mysql" && \
 	($JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-class-name=com.mysql.cj.jdbc.Driver)" > install.log || (>&2 cat install.log && exit 1)) && \
 	echo "  |  |____ 4. add deployment-scanner" && \
-    ($JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=entrypoint:add(scan-interval=5000,path=${ENTRY_DEPLOYMENTS})" > install.log || (>&2 cat install.log && exit 1)) && \
+    ($JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=entrypoint:add(scan-interval=5000,path=${ENTRY_WILDFLY_DEPLOYS})" > install.log || (>&2 cat install.log && exit 1)) && \
 	echo "  |  |____ 5. shutdown app-server" && \
 	($JBOSS_CLI -c ":shutdown" > install.log || (>&2 cat install.log && exit 1)) && \
-	\
-	echo "  |____ 10. cleanup" && \
-	rm -rf \
-		wildfly.tar.gz \
-		install.log \
-		mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar \
-		${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/* && \
-	ln -s ${WILDFLY_HOME}/standalone/log ${ENTRY_WILDFLY_LOGS} && \
-    chown jboss -R wildfly/standalone ${ENTRY_WILDFLY_LOGS} && \
     \
-    echo "  |____ 11. create and show textfile 'versions'" && \
+    echo "  |____ 10. create textfiles 'versions' and 'entrypoints'" && \
 	{ \
 		echo "  Build-Date              : $(date +%Y-%m-%d)"; \
-		echo "  Distribution            : $(cat /etc/os-release | grep -E '^NAME' | cut -d'"' -f2) v$(cat /etc/os-release | grep 'VERSION_ID' | cut -d'=' -f2)"; \
+		echo "  Distribution            : $(cat /etc/os-release | grep -E '^NAME' | cut -d'"' -f2) v$(cat /etc/os-release | grep 'VERSION_ID' | cut -d'=' -f2 | sed 's/\"//g')"; \
 		echo "  Java                    : $(java -version 2>&1 | head -n1 | sed -r 's/^.+"(.+)".+$/\1/' | cat)"; \
 		echo "  WildFly                 : $(${WILDFLY_HOME}/bin/standalone.sh -version --admin-only | grep WildFly | sed -r 's/^[^(]+ ([0-9\.]+Final).+$/\1/' | cat)"; \
 		echo "  MySQL-Connector         : ${MYSQL_CONNECTOR_VERSION}"; \
 		echo "  EclipseLink             : $(ls ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-* | sed -r 's/^.+-([0-9\.]+)\.jar$/\1/' | cat)"; \
 		echo "  KeyCloak-Client         : ${KEYCLOAK_VERSION}"; \
 	} > versions && \
+	{ \
+		echo "  ENTRY_WILDFLY_CLI       : ${ENTRY_WILDFLY_CLI}"; \
+		echo "  ENTRY_WILDFLY_DEPLOYS   : ${ENTRY_WILDFLY_DEPLOYS}"; \
+		echo "  ENTRY_WILDFLY_LOGS      : ${ENTRY_WILDFLY_LOGS}"; \
+	} > entrypoints && \
+	\
+	echo "  |____ 11. cleanup" && \
+	(( \
+        apt-get remove --purge --auto-remove -y gnupg && \
+        apt-get clean && \
+        apt-get autoremove && \
+        rm -rf ${TEMP_PATH} ${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/* && \
+        ln -s ${WILDFLY_HOME}/standalone/log ${ENTRY_WILDFLY_LOGS} && \
+        chown ${USER}:${USER} -R ${HOME} ${ENTRY_WILDFLY_LOGS} && \
+        chmod u+x ${HOME}/*.sh \
+    ) > install.log 2>&1 || (>&2 cat install.log && echo && exit 1)) && \
+	\
 	echo && \
 	echo "===========================================================" && \
 	echo && \
@@ -347,14 +373,13 @@ RUN echo && echo && \
 	echo && \
 	echo "===========================================================" && \
 	echo && \
-	echo "  WildFly HDD-Space       : $(du -sh ${WILDFLY_HOME} | cut -f1)" && \
-	echo "  WildFly Start-Time      : $((ENDTIME-STARTTIME)) seconds" && \
+	cat entrypoints && \
 	echo && \
 	echo "===========================================================" && \
 	echo
 
 WORKDIR ${HOME}
-USER jboss
+USER ${USER}
 
 # ports
 EXPOSE 8080 9990 8443 9993 8787
@@ -363,5 +388,4 @@ EXPOSE 8080 9990 8443 9993 8787
 HEALTHCHECK CMD ./healthcheck.sh
 
 # run wildfly
-SHELL ["/bin/bash", "-c"]
 CMD ["./run.sh"]
