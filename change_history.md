@@ -1,5 +1,12 @@
 ### Change-History
-* `22.0.1.Final-20210309`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `23.0.1.Final-20210429`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     debian:10.9-slim
+  - updated:  WildFly 23.0.1.Final
+  - updated:  mySQL-connector to v8.0.24
+  - changed:  run-scripts
+  - renamed:  /entrypoint-jboss-batch to /entrypoint-wildfly-cli
+  - renamed:  /entrypoint-deployments to /entrypoint-wildfly-deployments
+* `22.0.1.Final-20210309`
   - updated:  KeyCloak-Client 12.0.4
   - removed:  jq (potential vulnerability)
 * `22.0.1.Final-20210222`
