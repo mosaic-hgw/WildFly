@@ -1,17 +1,22 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 # WildFly Docker Image
-This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on image [alpine](https://hub.docker.com/_/alpine) and prepared for the tools of the MOSAIC-project (but can also be used for all other projects):
+This is a Docker image for the Java application server [WildFly](http://wildfly.org/). The image is based on slim [debian-image](https://hub.docker.com/_/debian) and prepared for the tools of the MOSAIC-project (but can also be used for all other projects):
 
 * [E-PIX](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/id-management-e-pix.html) (Enterprise Patient Identifier Crossreferencing)
 * [gPAS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/pseudonymverwaltung-gpas.html) (generic Pseudonym Administration Service)
 * [gICS](https://mosaic-greifswald.de/werkzeuge-und-vorlagen/einwilligungsmanagement-gics.html) (generic Informed Consent Service)
 
 ## Why should you use this WildFly-Image?
-* This images are based on Alpine, a minimalist Linux based container image.
+* This images are based on Debian, one of the most popular Linux distributions.
 * This image is a non-root container image. This adds an extra layer of security and is generally recommended for production environments.
 * This image can be started directly without building your own image first. Of course, you can still build your own image.
 
+## Available entrypoints
+Entrypoints are directories in the container that can be mounted as volumes.
+* `/entrypoint-wildfly-cli` to execute jBoss-cli-files before start WildFly (read-only access)
+* `/entrypoint-wildfly-deployments` to import your deployments, also ear- and/or war-files (read/write access)
+* `/entrypoint-wildfly-logs` to export all available log-files (read/write access)
 
 ## About Health-Check-Strategies
 There are 3 strategies built into this docker image.
@@ -24,9 +29,13 @@ There are 3 strategies built into this docker image.
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ### Last changes
-* `22.0.1.Final-20210309`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
-  - updated:  KeyCloak-Client 12.0.4
-  - removed:  jq (potential vulnerability)
+* `23.0.1.Final-20210429`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     debian:10.9-slim
+  - updated:  WildFly 23.0.1.Final
+  - updated:  mySQL-connector to v8.0.24
+  - changed:  run-scripts
+  - renamed:  /entrypoint-jboss-batch to /entrypoint-wildfly-cli
+  - renamed:  /entrypoint-deployments to /entrypoint-wildfly-deployments
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
 ### Run Image
@@ -34,7 +43,7 @@ There are 3 strategies built into this docker image.
   ```sh
   docker run \
     -p 8080:8080 \
-    -v /path/to/your/deployments:/entrypoint-deployments \
+    -v /path/to/your/deployments:/entrypoint-wildfly-deployments \
     mosaicgreifswald/wildfly
   ```
 
@@ -55,8 +64,8 @@ There are 3 strategies built into this docker image.
 * with deployments and jboss-batch
   ```sh
   docker run \
-    -v /path/to/your/deployments:/entrypoint-deployments \
-    -v /path/to/your/batch-files:/entrypoint-jboss-batch \
+    -v /path/to/your/deployments:/entrypoint-wildfly-deployments \
+    -v /path/to/your/batch-files:/entrypoint-wildfly-cli \
     ...
   ```
 
@@ -78,8 +87,8 @@ There are 3 strategies built into this docker image.
       ports:
         - 8080:8080
       volumes:
-        - /path/to/your/batch-files:/entrypoint-jboss-batch
-        - /path/to/your/deployments:/entrypoint-deployments
+        - /path/to/your/batch-files:/entrypoint-wildfly-cli
+        - /path/to/your/deployments:/entrypoint-wildfly-deployments
   ```
 
 * over docker-compose with dependent on mysql-db (example)
@@ -106,10 +115,10 @@ There are 3 strategies built into this docker image.
         WILDFLY_PASS: admin-secret
         HEALTHCHECK_URLS: |
           http://localhost:8080
-          http://localhost:8080/ths-web/html/public/common/processCompleted.xhtml
+          http://localhost:8080/your/own/success/page.xhtml
       volumes:
-        - /path/to/your/batch-files:/entrypoint-jboss-batch
-        - /path/to/your/deployments:/entrypoint-deployments
+        - /path/to/your/batch-files:/entrypoint-wildfly-cli
+        - /path/to/your/deployments:/entrypoint-wildfly-deployments
       entrypoint: /bin/bash
       command: -c "./wait-for-it.sh app-db:3306 -t 60 && ./run.sh"
   ```
@@ -132,7 +141,7 @@ There are 3 strategies built into this docker image.
 
   module add \
     --name=org.postgre \
-    --resources=/entrypoint-jboss-batch/postgresql.jar \
+    --resources=/entrypoint-wildfly-cli/postgresql.jar \
     --dependencies=javax.api,javax.transaction.api
 
   /subsystem=datasources/jdbc-driver=postgre: \
