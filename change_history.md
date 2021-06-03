@@ -1,5 +1,13 @@
 ### Change-History
-* `23.0.1.Final-20210429`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `23.0.2.Final-20210603`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  KeyCloak-Client 13.0.1
+  - updated:  openJRE 11.0.11
+  - improved: create_wildfly_admin.sh
+* `23.0.2.Final-20210429`
+  - updated:  WildFly 23.0.2.Final
+  - updated:  KeyCloak-Client 13.0.0
+  - updated:  mySQL-connector to v8.0.25
+* `23.0.1.Final-20210429`
   - from:     debian:10.9-slim
   - updated:  WildFly 23.0.1.Final
   - updated:  mySQL-connector to v8.0.24
