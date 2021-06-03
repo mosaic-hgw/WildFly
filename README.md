@@ -29,13 +29,10 @@ There are 3 strategies built into this docker image.
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ### Last changes
-* `23.0.1.Final-20210429`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
-  - from:     debian:10.9-slim
-  - updated:  WildFly 23.0.1.Final
-  - updated:  mySQL-connector to v8.0.24
-  - changed:  run-scripts
-  - renamed:  /entrypoint-jboss-batch to /entrypoint-wildfly-cli
-  - renamed:  /entrypoint-deployments to /entrypoint-wildfly-deployments
+* `23.0.2.Final-20210603`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  KeyCloak-Client 13.0.1
+  - updated:  openJRE 11.0.11
+  - improved: create_wildfly_admin.sh
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
 ### Run Image
