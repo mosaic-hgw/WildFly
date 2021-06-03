@@ -25,13 +25,13 @@ MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 # variables
 ENV MAVEN_REPOSITORY                https://repo1.maven.org/maven2
 
-ENV WILDFLY_VERSION                 23.0.1.Final
+ENV WILDFLY_VERSION                 23.0.2.Final
 ENV WILDFLY_DOWNLOAD_URL            https://download.jboss.org/wildfly/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz
-ENV WILDFLY_SHA256                  5622e62bf210f983d1678fd14b2d218b13446ca83a80f04bbe8cdc6ea276945e
+ENV WILDFLY_SHA256                  6525f6372a8dbddb84d7e3a466dbef1e046253c2bcd682c29fd0f4c1ec606fc4
 
-ENV MYSQL_CONNECTOR_VERSION         8.0.24
+ENV MYSQL_CONNECTOR_VERSION         8.0.25
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL    ${MAVEN_REPOSITORY}/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256          99b52da63d9d31d5494a302f3dbb554b730cc20db1fb09eda64ab0e27c130aab
+ENV MYSQL_CONNECTOR_SHA256          a0a1be0389e541dad8841b326e79c51d39abbe1ca52267304d76d1cf4801ce96
 
 ENV ECLIPSELINK_VERSION             2.7.8
 ENV ECLIPSELINK_DOWNLOAD_URL        ${MAVEN_REPOSITORY}/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
@@ -42,9 +42,9 @@ ENV WAIT_FOR_IT_COMMIT_HASH         ed77b63706ea721766a62ff22d3a251d8b4a6a30
 ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA256              2ea7475e07674e4f6c1093b4ad6b0d8cbbc6f9c65c73902fb70861aa66a6fbc0
 
-ENV KEYCLOAK_VERSION                12.0.4
+ENV KEYCLOAK_VERSION                13.0.1
 ENV KEYCLOAK_DOWNLOAD_URL           https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-oidc-wildfly-adapter-${KEYCLOAK_VERSION}.tar.gz
-ENV KEYCLOAK_SHA256                 c3a48c74001385bccefa9e5097f9b06b4e2f97af38e5b44ecae2c5ef4bcf28f5
+ENV KEYCLOAK_SHA256                 7ee9c306aac23929c28e6e939881f9e4d3ffed5efca38807036c32426e9127a5
 
 ENV JAVA_VERSION                    11
 
@@ -66,7 +66,7 @@ ENV ENTRY_WILDFLY_LOGS				/entrypoint-wildfly-logs
 LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
       org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "23.0.1.Final-20210429" \
+      org.opencontainers.image.version     = "23.0.2.Final-20210603" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "mosaic-wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
@@ -159,10 +159,16 @@ RUN echo && echo && \
         echo '    echo "========================================================================="'; \
         echo '    echo'; \
         echo '    if [ -z "${NO_ADMIN}" ]; then'; \
-        echo '        WILDFLY_PASS=${WILDFLY_PASS:-$(tr -cd "[:alnum:]" < /dev/urandom | head -c20)}'; \
-        echo '        ('${WILDFLY_HOME}'/bin/add-user.sh '${ADMIN_USER}' ${WILDFLY_PASS} > create_admin.log && \\'; \
-        echo '        echo -e "\033[1;37m  You can configure this WildFly-Server using:\033[0m" && \\'; \
-        echo '        echo -e "\033[1;37m  '${ADMIN_USER}':${WILDFLY_PASS}\033[0m") || \\'; \
+        echo '        echo -e "\033[1;37m  You can configure this WildFly-Server using:\033[0m"'; \
+        echo '        echo -e "\033[1;37m    Username: '${ADMIN_USER}'\033[0m"'; \
+        echo '        if [ -z "${WILDFLY_PASS}" ]; then'; \
+        echo '            WILDFLY_PASS=$(tr -cd "[:alnum:]" < /dev/urandom | head -c20)'; \
+        echo '            echo -e "\033[1;37m    Password: ${WILDFLY_PASS}\033[0m"'; \
+        echo '            echo -e "\033[1;37m  The password is displayed here only this once.\033[0m"'; \
+        echo '        else'; \
+        echo '            echo -e "\033[1;37m    Password: ***known***\033[0m"'; \
+        echo '        fi'; \
+        echo '        '${WILDFLY_HOME}'/bin/add-user.sh '${ADMIN_USER}' ${WILDFLY_PASS} > create_admin.log'; \
         echo '        cat create_admin.log'; \
         echo '    else'; \
         echo '        echo "  You can NOT configure this WildFly-Server"'; \
@@ -308,11 +314,12 @@ RUN echo && echo && \
         echo; \
 		echo 'echo "========================================================================="'; \
         echo 'echo'; \
-		echo 'echo "This is a Docker image for the Java application server WildFly. The image"'; \
-        echo 'echo "is based on slim debian-image and prepared for the tools of the university"'; \
-        echo 'echo "medicine greifswald (but can also be used for other similar projects)."'; \
+		echo 'echo "  This is a Docker image for the Java application server WildFly. The"'; \
+        echo 'echo "  image is based on slim debian-image and prepared for the tools of the"'; \
+        echo 'echo "  university medicine greifswald (but can also be used for other similar"'; \
+        echo 'echo "  projects)."'; \
         echo 'echo'; \
-        echo 'echo "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly"'; \
+        echo 'echo "  https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly"'; \
         echo 'echo'; \
 		echo 'echo "========================================================================="'; \
         echo 'echo'; \
@@ -341,7 +348,7 @@ RUN echo && echo && \
     \
     echo "  |____ 10. create textfiles 'versions' and 'entrypoints'" && \
 	{ \
-		echo "  Build-Date              : $(date +%Y-%m-%d)"; \
+		echo "  Build-Date (WildFly-Img): $(date +%Y-%m-%d)"; \
 		echo "  Distribution            : $(cat /etc/os-release | grep -E '^NAME' | cut -d'"' -f2) v$(cat /etc/os-release | grep 'VERSION_ID' | cut -d'=' -f2 | sed 's/\"//g')"; \
 		echo "  Java                    : $(java -version 2>&1 | head -n1 | sed -r 's/^.+"(.+)".+$/\1/' | cat)"; \
 		echo "  WildFly                 : $(${WILDFLY_HOME}/bin/standalone.sh -version --admin-only | grep WildFly | sed -r 's/^[^(]+ ([0-9\.]+Final).+$/\1/' | cat)"; \
