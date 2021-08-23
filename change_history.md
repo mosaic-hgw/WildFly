@@ -1,5 +1,14 @@
 ### Change-History
-* `23.0.2.Final-20210603`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `24.0.1.Final-20210823`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - from:     debian:bullseye-slim
+  - updated:  WildFly 24.0.1.Final
+  - updated:  KeyCloak-Client 15.0.2
+  - updated:  EclipseLink 2.7.9
+  - updated:  openJRE 11.0.12
+  - updated:  mySQL-connector to v8.0.26
+  - added:    script sync_deployments.sh to bypass wildfly-makerfiles
+  - added:    /entrypoint-java-cacerts
+* `23.0.2.Final-20210603`
   - updated:  KeyCloak-Client 13.0.1
   - updated:  openJRE 11.0.11
   - improved: create_wildfly_admin.sh
