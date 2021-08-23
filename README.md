@@ -15,8 +15,9 @@ This is a Docker image for the Java application server [WildFly](http://wildfly.
 ## Available entrypoints
 Entrypoints are directories in the container that can be mounted as volumes.
 * `/entrypoint-wildfly-cli` to execute jBoss-cli-files before start WildFly (read-only access)
-* `/entrypoint-wildfly-deployments` to import your deployments, also ear- and/or war-files (read/write access)
+* `/entrypoint-wildfly-deployments` to import your deployments, also ear- and/or war-files (read-only access, optional write access)
 * `/entrypoint-wildfly-logs` to export all available log-files (read/write access)
+* `/entrypoint-java-cacerts` to change the cacerts with your own (read-only access)
 
 ## About Health-Check-Strategies
 There are 3 strategies built into this docker image.
@@ -28,14 +29,17 @@ There are 3 strategies built into this docker image.
 * Running-Deployments<br>
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
-### Last changes
-* `23.0.2.Final-20210603`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
-  - updated:  KeyCloak-Client 13.0.1
-  - updated:  openJRE 11.0.11
-  - improved: create_wildfly_admin.sh
+## Current Software-Versions on this Image
+* `24.0.1.Final-20210823`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - **Debian** 11 "bullseye"
+  - **openJRE** 11.0.12
+  - **WildFly** 24.0.1.Final
+  - **KeyCloak-Client** 15.0.2
+  - **EclipseLink** 2.7.9
+  - **mySQL-connector** 8.0.26
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
-### Run Image
+## Run Image
 * only deployments and add admin with random-password per default
   ```sh
   docker run \
