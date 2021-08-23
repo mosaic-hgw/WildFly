@@ -1,4 +1,4 @@
-FROM debian:10.9-slim
+FROM debian:bullseye-slim
 
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector and Healthcheck
@@ -25,35 +25,38 @@ MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 # variables
 ENV MAVEN_REPOSITORY                https://repo1.maven.org/maven2
 
-ENV WILDFLY_VERSION                 23.0.2.Final
+ENV WILDFLY_VERSION                 24.0.1.Final
 ENV WILDFLY_DOWNLOAD_URL            https://download.jboss.org/wildfly/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz
-ENV WILDFLY_SHA256                  6525f6372a8dbddb84d7e3a466dbef1e046253c2bcd682c29fd0f4c1ec606fc4
+ENV WILDFLY_SHA256                  783f3c2f980779873abc70bc9517511d6506936c1b611c028e773ee91e54ee8f
 
-ENV MYSQL_CONNECTOR_VERSION         8.0.25
+ENV MYSQL_CONNECTOR_VERSION         8.0.26
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL    ${MAVEN_REPOSITORY}/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256          a0a1be0389e541dad8841b326e79c51d39abbe1ca52267304d76d1cf4801ce96
+ENV MYSQL_CONNECTOR_SHA256          3e1dddd5fdbcd78a552a8fc915fcb804e4f7f83a873355972a3c97a22556f62c
 
-ENV ECLIPSELINK_VERSION             2.7.8
+ENV ECLIPSELINK_VERSION             2.7.9
 ENV ECLIPSELINK_DOWNLOAD_URL        ${MAVEN_REPOSITORY}/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
 ENV ECLIPSELINK_PATH                modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA256              4f0cf067c9e9fd28f600f4e0c2b97fa976a6d3ee1548e931be81751aecafc243
+ENV ECLIPSELINK_SHA256              ee93178a220f7279c603df373cf1fec1f7f32d8b5a52b6eb63d1111ed5a4cab1
 
 ENV WAIT_FOR_IT_COMMIT_HASH         ed77b63706ea721766a62ff22d3a251d8b4a6a30
 ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA256              2ea7475e07674e4f6c1093b4ad6b0d8cbbc6f9c65c73902fb70861aa66a6fbc0
 
-ENV KEYCLOAK_VERSION                13.0.1
+ENV KEYCLOAK_VERSION                15.0.2
 ENV KEYCLOAK_DOWNLOAD_URL           https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-oidc-wildfly-adapter-${KEYCLOAK_VERSION}.tar.gz
-ENV KEYCLOAK_SHA256                 7ee9c306aac23929c28e6e939881f9e4d3ffed5efca38807036c32426e9127a5
+ENV KEYCLOAK_SHA256                 bfe698615bf982b164a2b6117cfdb6a5493b7b1cd6fd449795fb6aaaeaa1976e
 
 ENV JAVA_VERSION                    11
+ENV JAVA_HOME                       /usr/lib/jvm/zulu${JAVA_VERSION}
 
 ENV USER                            mosaic
 ENV HOME                            /opt/${USER}
 ENV WILDFLY_HOME                    ${HOME}/wildfly
+ENV WILDFLY_MARKERFILES             auto
 ENV ADMIN_USER                      admin
 ENV JBOSS_CLI                       ${WILDFLY_HOME}/bin/jboss-cli.sh
 ENV READY_PATH                      ${HOME}/ready
+ENV INTERNAL_CLI_PATH               ${HOME}/internal_cli
 ENV DEBUGGING                       false
 ENV LAUNCH_JBOSS_IN_BACKGROUND      true
 ENV TEMP_PATH						/opt/temp
@@ -61,12 +64,13 @@ ENV TEMP_PATH						/opt/temp
 ENV ENTRY_WILDFLY_CLI               /entrypoint-wildfly-cli
 ENV ENTRY_WILDFLY_DEPLOYS           /entrypoint-wildfly-deployments
 ENV ENTRY_WILDFLY_LOGS				/entrypoint-wildfly-logs
+ENV ENTRY_JAVA_CACERTS				/entrypoint-java-cacerts
 
 # annotations
 LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
       org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "23.0.2.Final-20210603" \
+      org.opencontainers.image.version     = "24.0.1.Final-20210823" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "mosaic-wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
@@ -88,9 +92,9 @@ RUN echo && echo && \
 	chmod 755 ${HOME} && \
     \
 	echo "  |____ 3. create folders and permissions" && \
-    mkdir ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${TEMP_PATH} && \
-    chmod go+w ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} && \
-    chown ${USER}:${USER} ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} && \
+    mkdir ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${TEMP_PATH} ${INTERNAL_CLI_PATH} && \
+    chmod go+w ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${INTERNAL_CLI_PATH} && \
+    chown ${USER}:${USER} ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${INTERNAL_CLI_PATH} && \
 	\
 	echo "  |____ 4. install missing packages (curl, gnupg, jre)" && \
 	cd ${TEMP_PATH}/ && \
@@ -263,7 +267,7 @@ RUN echo && echo && \
         echo '    CLI_FILTER="\.cli"'; \
         echo 'fi'; \
         echo; \
-        echo 'BATCH_FILES=$(comm -23 <(ls '${ENTRY_WILDFLY_CLI}' 2> /dev/null | grep -E "$CLI_FILTER$" | grep -v .completed) \\'; \
+        echo 'BATCH_FILES=$(comm -23 --nocheck-order <(ls '${ENTRY_WILDFLY_CLI}' '${INTERNAL_CLI_PATH}' 2> /dev/null | grep -v "/" | grep -E "$CLI_FILTER$" | grep -v .completed) \\'; \
         echo '    <(ls '${READY_PATH}' 2> /dev/null | grep .completed | sed "s/\.completed$//"))'; \
         echo; \
         echo 'echo "  $(echo ${BATCH_FILES} | wc -w) cli-file(s) found to execute with jboss-cli.sh"'; \
@@ -289,6 +293,16 @@ RUN echo && echo && \
         echo '                '${JBOSS_CLI}' -c ":shutdown"'; \
         echo '                exit 99'; \
         echo '            fi'; \
+        echo '        elif [ -f "'${INTERNAL_CLI_PATH}'/${BATCH_FILE}" ]; then'; \
+        echo '            echo "execute internal jboss-batchfile \"${BATCH_FILE}\""'; \
+        echo '            '${JBOSS_CLI}' -c --properties=env.properties --file='${INTERNAL_CLI_PATH}'/${BATCH_FILE}'; \
+        echo '            if [ $? -eq 0 ]; then'; \
+        echo '                touch '${READY_PATH}'/${BATCH_FILE}.completed'; \
+        echo '            else'; \
+        echo '                echo "internal JBoss-Batchfile \"${BATCH_FILE}\" can not be execute"'; \
+        echo '                '${JBOSS_CLI}' -c ":shutdown"'; \
+        echo '                exit 99'; \
+        echo '            fi'; \
         echo '        fi'; \
         echo '    done'; \
         echo '    '${JBOSS_CLI}' -c ":shutdown"'; \
@@ -301,12 +315,88 @@ RUN echo && echo && \
     { \
         echo '#!/bin/bash'; \
         echo; \
+		echo 'SRC_DIR="'${ENTRY_WILDFLY_DEPLOYS}'"'; \
+		echo 'DES_DIR="'${WILDFLY_HOME}'/standalone/deployments"'; \
+		echo; \
+		echo 'getDirData(){'; \
+		echo '    stat -c "%Y%s,%n" ${1}/* 2> /dev/null | sed "s#${1}/##"'; \
+		echo '}'; \
+		echo 'safeCopy(){'; \
+		echo '    touch ${3}/${1}.skipdeploy'; \
+		echo '    cp -p ${2}/${1} ${3}/'; \
+		echo '    rm ${3}/${1}.skipdeploy ${3}/${1}.undeployed 2> /dev/null'; \
+		echo '}'; \
+		echo; \
+		echo '# clear DES_DIR'; \
+		echo 'rm -f ${DES_DIR}/*'; \
+		echo; \
+		echo 'while true; do'; \
+		echo '    # to compare get only files with extensions of .ear, .war and .skipdeploy'; \
+		echo '    SRC=($(getDirData ${SRC_DIR} | grep -E "(\.ear|\.war|\.skipdeploy)$"))'; \
+		echo '    DES=($(getDirData ${DES_DIR} | grep -E "(\.ear|\.war|\.skipdeploy)$"))'; \
+		echo; \
+		echo '    # search and sync new and modified files'; \
+		echo '    for SRC_ITEM in "${SRC[@]}"; do'; \
+		echo '        SRC_NAME=$(echo ${SRC_ITEM} | cut -d, -f2)'; \
+		echo '        for DES_ITEM in "${DES[@]}"; do'; \
+		echo '            DES_NAME=$(echo ${DES_ITEM} | cut -d, -f2)'; \
+		echo '            if [ "${SRC_NAME}" = "${DES_NAME}" ]; then'; \
+		echo '                SRC_DATESIZE=$(echo ${SRC_ITEM} | cut -d, -f1)'; \
+		echo '                DES_DATESIZE=$(echo ${DES_ITEM} | cut -d, -f1)'; \
+		echo '                if [ ! "${SRC_DATESIZE}" = "${DES_DATESIZE}" ]; then'; \
+		echo '                    echo ">>> resynchronize file: ${SRC_NAME}"'; \
+		echo '                    safeCopy ${SRC_NAME} ${SRC_DIR} ${DES_DIR}'; \
+		echo '                fi'; \
+		echo '                continue 2'; \
+		echo '            fi'; \
+		echo '        done'; \
+		echo '        echo ">>> synchronize file: ${SRC_NAME}"'; \
+		echo '        safeCopy ${SRC_NAME} ${SRC_DIR} ${DES_DIR}'; \
+		echo '    done'; \
+		echo; \
+		echo '    # search and sync removed files'; \
+		echo '    for DES_ITEM in "${DES[@]}"; do'; \
+		echo '        DES_NAME=$(echo ${DES_ITEM} | cut -d, -f2)'; \
+		echo '        for SRC_ITEM in "${SRC[@]}"; do'; \
+		echo '            SRC_NAME=$(echo ${SRC_ITEM} | cut -d, -f2)'; \
+		echo '            [ "${SRC_NAME}" = "${DES_NAME}" ] && continue 2'; \
+		echo '        done'; \
+		echo '        echo ">>> unsynchronize file: ${DES_NAME}"'; \
+		echo '        rm ${DES_DIR}/${DES_NAME}'; \
+		echo '    done'; \
+		echo; \
+		echo '    # wait'; \
+		echo '    sleep 5'; \
+		echo 'done'; \
+    } > sync_deployments.sh && \
+    \
+    { \
+        echo '#!/bin/bash'; \
+        echo; \
         echo './create_wildfly_admin.sh'; \
         echo; \
-        echo './add_jboss_cli.sh'; \
-        echo 'rm -f '${WILDFLY_HOME}'/standalone/configuration/standalone_xml_history/current/*'; \
+        echo 'if [[ ! ${WILDFLY_MARKERFILES,,} =~ ^(true|false)$ ]]; then'; \
+        echo '    WILDFLY_MARKERFILES=$((touch ${ENTRY_WILDFLY_DEPLOYS}/mf.test && rm ${ENTRY_WILDFLY_DEPLOYS}/mf.test) 2>/dev/null && echo "true" || echo "false")'; \
+        echo 'fi'; \
         echo; \
-        echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${DEBUGGING}" == "true" ] && echo "--debug")'; \
+        echo 'if [[ "${WILDFLY_MARKERFILES,,}" != "$(cat '${READY_PATH}'/markerfiles_mode)" ]]; then'; \
+        echo '    echo -n "${WILDFLY_MARKERFILES,,}" > '${READY_PATH}'/markerfiles_mode'; \
+        echo '    if [[ "${WILDFLY_MARKERFILES,,}" == "false" ]]; then'; \
+        echo '        echo "/subsystem=deployment-scanner/scanner=default:write-attribute(name=\\"scan-enabled\\",value=true)" > '${INTERNAL_CLI_PATH}'/markerfiles.cli'; \
+        echo '        echo "/subsystem=deployment-scanner/scanner=entrypoint:write-attribute(name=\\"scan-enabled\\",value=false)" >> '${INTERNAL_CLI_PATH}'/markerfiles.cli'; \
+        echo '    else'; \
+        echo '        echo "/subsystem=deployment-scanner/scanner=default:write-attribute(name=\\"scan-enabled\\",value=false)" > '${INTERNAL_CLI_PATH}'/markerfiles.cli'; \
+        echo '        echo "/subsystem=deployment-scanner/scanner=entrypoint:write-attribute(name=\\"scan-enabled\\",value=true)" >> '${INTERNAL_CLI_PATH}'/markerfiles.cli'; \
+        echo '    fi'; \
+        echo '    rm -f '${READY_PATH}'/markerfiles.cli.completed'; \
+        echo 'fi'; \
+        echo; \
+        echo './add_jboss_cli.sh'; \
+        echo; \
+        echo '[[ "${WILDFLY_MARKERFILES,,}" == "false" ]] && ./sync_deployments.sh &'; \
+        echo; \
+        echo 'rm -f '${WILDFLY_HOME}'/standalone/configuration/standalone_xml_history/current/*'; \
+        echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${DEBUGGING}" = "true" ] && echo "--debug")'; \
     } > run_wildfly.sh && \
     \
     { \
@@ -342,7 +432,9 @@ RUN echo && echo && \
 	echo "  |  |____ 3. add datasource-driver for mysql" && \
 	($JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-class-name=com.mysql.cj.jdbc.Driver)" > install.log || (>&2 cat install.log && exit 1)) && \
 	echo "  |  |____ 4. add deployment-scanner" && \
+    ($JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=default:write-attribute(name=scan-enabled,value=false)" > install.log || (>&2 cat install.log && exit 1)) && \
     ($JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=entrypoint:add(scan-interval=5000,path=${ENTRY_WILDFLY_DEPLOYS})" > install.log || (>&2 cat install.log && exit 1)) && \
+    echo -n "true" > ${READY_PATH}/markerfiles_mode && \
 	echo "  |  |____ 5. shutdown app-server" && \
 	($JBOSS_CLI -c ":shutdown" > install.log || (>&2 cat install.log && exit 1)) && \
     \
@@ -360,6 +452,7 @@ RUN echo && echo && \
 		echo "  ENTRY_WILDFLY_CLI       : ${ENTRY_WILDFLY_CLI}"; \
 		echo "  ENTRY_WILDFLY_DEPLOYS   : ${ENTRY_WILDFLY_DEPLOYS}"; \
 		echo "  ENTRY_WILDFLY_LOGS      : ${ENTRY_WILDFLY_LOGS}"; \
+		echo "  ENTRY_JAVA_CACERTS      : ${ENTRY_JAVA_CACERTS}"; \
 	} > entrypoints && \
 	\
 	echo "  |____ 11. cleanup" && \
@@ -369,9 +462,10 @@ RUN echo && echo && \
         apt-get autoremove && \
         rm -rf ${TEMP_PATH} ${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/* && \
         ln -s ${WILDFLY_HOME}/standalone/log ${ENTRY_WILDFLY_LOGS} && \
+        ln -s ${JAVA_HOME}/lib/security/cacerts ${ENTRY_JAVA_CACERTS} && \
         chown ${USER}:${USER} -R ${HOME} ${ENTRY_WILDFLY_LOGS} && \
         chmod u+x ${HOME}/*.sh \
-    ) > install.log 2>&1 || (>&2 cat install.log && echo && exit 1)) && \
+    ) > install.log 2>&1 || (>&2 cat install.log && echo && exit 1)) && rm -f install.log && \
 	\
 	echo && \
 	echo "===========================================================" && \
