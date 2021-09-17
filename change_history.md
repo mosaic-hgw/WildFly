@@ -1,5 +1,7 @@
 ### Change-History
-* `24.0.1.Final-20210823`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `24.0.1.Final-20210917`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - fixed:    script healthcheck.sh
+* `24.0.1.Final-20210823`
   - from:     debian:bullseye-slim
   - updated:  WildFly 24.0.1.Final
   - updated:  KeyCloak-Client 15.0.2
