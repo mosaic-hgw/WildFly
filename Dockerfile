@@ -70,7 +70,7 @@ ENV ENTRY_JAVA_CACERTS				/entrypoint-java-cacerts
 LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
       org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "24.0.1.Final-20210823" \
+      org.opencontainers.image.version     = "24.0.1.Final-20210917" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "mosaic-wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
@@ -109,7 +109,7 @@ RUN echo && echo && \
 	\
 	echo "  |____ 5. install wildfly" && \
 	echo -n "  |  |____ 1. download " && \
-	(curl -Lso wildfly.tar.gz ${WILDFLY_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
+	(curl -Lso wildfly.tar.gz ${WILDFLY_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
 	echo "($(du -h wildfly.tar.gz | cut -f1))" && \
 	echo "  |  |____ 2. check checksum" && \
 	(sha256sum wildfly.tar.gz | grep -q ${WILDFLY_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum wildfly.tar.gz)" && exit 1)) && \
@@ -125,11 +125,11 @@ RUN echo && echo && \
 	\
 	echo "  |____ 6. download additional components" && \
 	echo "  |  |____ 1. download mysql-connector" && \
-    (curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
+    (curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
     (sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep -q ${MYSQL_CONNECTOR_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar)" && exit 1)) && \
 	\
     echo "  |  |____ 2. download/install eclipslink" && \
-    (curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
+    (curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
     (sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep -q ${ECLIPSELINK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
     sed -i "s/<\/resources>/\n \
         <resource-root path=\"eclipselink-${ECLIPSELINK_VERSION}.jar\">\n \
@@ -141,13 +141,13 @@ RUN echo && echo && \
     chown -R ${USER}:${USER} ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
 	\
     echo "  |  |____ 3. download wait-for-it-script" && \
-    (curl -Lso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
+    (curl -Lso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
     (sha256sum ${HOME}/wait-for-it.sh | grep -q ${WAIT_FOR_IT_SHA256} > /dev/null || (>&2 echo "sha256sum failed $(sha256sum ${HOME}/wait-for-it.sh)" && exit 1)) && \
     chmod +x ${HOME}/wait-for-it.sh && \
 	\
 	echo "  |____ 7. install keycloack-client" && \
     echo "  |  |____ 1. download" && \
-	(curl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 echo -e "\ncannot download\n" && exit 1))  && \
+	(curl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
 	echo "  |  |____ 2. check checksum" && \
 	(sha256sum keycloak.tar.gz | grep -q ${KEYCLOAK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum keycloak.tar.gz)" && exit 1)) && \
     echo "  |  |____ 3. extract" && \
@@ -198,7 +198,7 @@ RUN echo && echo && \
         echo '[ -f '${READY_PATH}'/jboss_cli_block ] && exit 1'; \
         echo; \
         echo '# check is wildfly running'; \
-        echo './wildfly_started.sh || exit 1'; \
+        echo './wildfly_started.sh || (echo "wildfly not running" && exit 1)'; \
         echo; \
         echo '# if set HEALTHCHECK_URLS via env-variable, then check this for request-code 200'; \
         echo 'if [ ! -z "$HEALTHCHECK_URLS" ]'; \
@@ -207,14 +207,14 @@ RUN echo && echo && \
         echo '    while read DEPLOYMENT_URL'; \
         echo '    do'; \
         echo '        [ -z ${DEPLOYMENT_URL} ] && continue'; \
-        echo -e '        URL_STATE=$(curl -sNIX GET ${DEPLOYMENT_URL} | head -n 1)'; \
+        /bin/echo -e '        URL_STATE=$(curl -sNIX GET ${DEPLOYMENT_URL} | head -n 1)'; \
         echo '        echo " > ${DEPLOYMENT_URL}: ${URL_STATE}"'; \
         echo '        if [[ $URL_STATE != *"200"* ]]'; \
         echo '        then'; \
-        echo -e '            echo "url \x27${DEPLOYMENT_URL}\x27 has returned \x27${URL_STATE//[$\x27\\t\\r\\n\x27]}\x27, expected 200"'; \
+        /bin/echo -e '            echo "url \x27${DEPLOYMENT_URL}\x27 has returned \x27${URL_STATE//[$\x27\\t\\r\\n\x27]}\x27, expected 200"'; \
         echo '            exit 1'; \
         echo '        fi'; \
-        echo '    done < <(echo "$HEALTHCHECK_URLS")'; \
+        echo '    done < <(echo "$HEALTHCHECK_URLS" | sed "s/ /\\n/g")'; \
         echo 'fi'; \
         echo; \
         echo '# if set WILDFLY_PASS, then check deployments via managemant-tool'; \
@@ -222,7 +222,7 @@ RUN echo && echo && \
         echo 'then'; \
         echo '    echo "using wildfly-password"'; \
         echo '    MGNT_URL="http://${ADMIN_USER}:${WILDFLY_PASS}@localhost:9990/management"'; \
-        echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | grep -oE \x27"deployment" ?: ?(null|\{[^}]*\}),\x27 | sed -r \x27s/([": \{\}]|deployment|null)//g;s/,/\\n/g;s/\\n$//\x27)'; \
+        /bin/echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | grep -oE \x27"deployment" ?: ?(null|\{[^}]*\}),\x27 | sed -r \x27s/([": \{\}]|deployment|null)//g;s/,/\\n/g;s/\\n$//\x27)'; \
         echo '    while read DEPLOYMENT'; \
         echo '    do'; \
         echo '        DEPLOYMENT_STATE=$(curl -sk --digest "${MGNT_URL}/deployment/${DEPLOYMENT}?operation=attribute&name=status")'; \
@@ -239,11 +239,11 @@ RUN echo && echo && \
         echo 'if [ -z $WILDFLY_PASS ] && [ -z "$HEALTHCHECK_URLS" ]'; \
         echo 'then'; \
         echo '    echo "using fallback-variant"'; \
-        echo -e '    DEPLOYMENTS=$($JBOSS_CLI -c "deployment-info" | awk \x27{if (NR!=1) {print $1,$NF}}\x27)'; \
+        /bin/echo -e '    DEPLOYMENTS=$($JBOSS_CLI -c "deployment-info" | awk \x27{if (NR!=1) {print $1,$NF}}\x27)'; \
         echo '    while read DEPLOYMENT'; \
         echo '    do'; \
-        echo -e '        DEPLOYMENT_NAME=$(echo $DEPLOYMENT | awk \x27{print $1}\x27)'; \
-        echo -e '        DEPLOYMENT_STATE=$(echo $DEPLOYMENT | awk \x27{print $2}\x27)'; \
+        /bin/echo -e '        DEPLOYMENT_NAME=$(echo $DEPLOYMENT | awk \x27{print $1}\x27)'; \
+        /bin/echo -e '        DEPLOYMENT_STATE=$(echo $DEPLOYMENT | awk \x27{print $2}\x27)'; \
         echo '        echo " > ${DEPLOYMENT_NAME}: ${DEPLOYMENT_STATE}"'; \
         echo '        if [[ ${DEPLOYMENT_STATE} == *"FAILED"* ]]'; \
         echo '        then'; \
