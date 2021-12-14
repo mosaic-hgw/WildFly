@@ -29,9 +29,9 @@ ENV WILDFLY_VERSION                 24.0.1.Final
 ENV WILDFLY_DOWNLOAD_URL            https://download.jboss.org/wildfly/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz
 ENV WILDFLY_SHA256                  783f3c2f980779873abc70bc9517511d6506936c1b611c028e773ee91e54ee8f
 
-ENV MYSQL_CONNECTOR_VERSION         8.0.26
+ENV MYSQL_CONNECTOR_VERSION         8.0.27
 ENV MYSQL_CONNECTOR_DOWNLOAD_URL    ${MAVEN_REPOSITORY}/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256          3e1dddd5fdbcd78a552a8fc915fcb804e4f7f83a873355972a3c97a22556f62c
+ENV MYSQL_CONNECTOR_SHA256          d670e85fa1075a80d91b8f17dbd620d76717bc20c74ab4aea8356e37a8545ffe
 
 ENV ECLIPSELINK_VERSION             2.7.9
 ENV ECLIPSELINK_DOWNLOAD_URL        ${MAVEN_REPOSITORY}/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
@@ -42,9 +42,9 @@ ENV WAIT_FOR_IT_COMMIT_HASH         ed77b63706ea721766a62ff22d3a251d8b4a6a30
 ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
 ENV WAIT_FOR_IT_SHA256              2ea7475e07674e4f6c1093b4ad6b0d8cbbc6f9c65c73902fb70861aa66a6fbc0
 
-ENV KEYCLOAK_VERSION                15.0.2
+ENV KEYCLOAK_VERSION                15.1.0
 ENV KEYCLOAK_DOWNLOAD_URL           https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-oidc-wildfly-adapter-${KEYCLOAK_VERSION}.tar.gz
-ENV KEYCLOAK_SHA256                 bfe698615bf982b164a2b6117cfdb6a5493b7b1cd6fd449795fb6aaaeaa1976e
+ENV KEYCLOAK_SHA256                 97ba299202be16f427f95dd4c08cfc79a1df8bff77a4c059eea9cd6dfe104efa
 
 ENV JAVA_VERSION                    11
 ENV JAVA_HOME                       /usr/lib/jvm/zulu${JAVA_VERSION}
@@ -59,18 +59,20 @@ ENV READY_PATH                      ${HOME}/ready
 ENV INTERNAL_CLI_PATH               ${HOME}/internal_cli
 ENV DEBUGGING                       false
 ENV LAUNCH_JBOSS_IN_BACKGROUND      true
-ENV TEMP_PATH						/opt/temp
+ENV TEMP_PATH                       /opt/temp
+ENV TZ                              Europe/Berlin
 
 ENV ENTRY_WILDFLY_CLI               /entrypoint-wildfly-cli
 ENV ENTRY_WILDFLY_DEPLOYS           /entrypoint-wildfly-deployments
-ENV ENTRY_WILDFLY_LOGS				/entrypoint-wildfly-logs
-ENV ENTRY_JAVA_CACERTS				/entrypoint-java-cacerts
+ENV ENTRY_WILDFLY_LOGS              /entrypoint-wildfly-logs
+ENV ENTRY_JAVA_CACERTS              /entrypoint-java-cacerts
+ENV LOG4J_FORMAT_MSG_NO_LOOKUPS     true
 
 # annotations
 LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
       org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "24.0.1.Final-20210917" \
+      org.opencontainers.image.version     = "24.0.1.Final-20211214" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "mosaic-wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
@@ -291,7 +293,7 @@ RUN echo && echo && \
         echo '            else'; \
         echo '                echo "JBoss-Batchfile \"${BATCH_FILE}\" can not be execute"'; \
         echo '                '${JBOSS_CLI}' -c ":shutdown"'; \
-        echo '                exit 99'; \
+        echo '                exit 125'; \
         echo '            fi'; \
         echo '        elif [ -f "'${INTERNAL_CLI_PATH}'/${BATCH_FILE}" ]; then'; \
         echo '            echo "execute internal jboss-batchfile \"${BATCH_FILE}\""'; \
@@ -301,7 +303,7 @@ RUN echo && echo && \
         echo '            else'; \
         echo '                echo "internal JBoss-Batchfile \"${BATCH_FILE}\" can not be execute"'; \
         echo '                '${JBOSS_CLI}' -c ":shutdown"'; \
-        echo '                exit 99'; \
+        echo '                exit 125'; \
         echo '            fi'; \
         echo '        fi'; \
         echo '    done'; \
@@ -310,6 +312,7 @@ RUN echo && echo && \
         echo; \
         echo 'rm -f '${WILDFLY_HOME}'/standalone/configuration/standalone_xml_history/current/*'; \
         echo 'rm -f '${READY_PATH}'/jboss_cli_block env.properties'; \
+        echo 'exit 0'; \
     } > add_jboss_cli.sh && \
     \
     { \
@@ -392,6 +395,10 @@ RUN echo && echo && \
         echo 'fi'; \
         echo; \
         echo './add_jboss_cli.sh'; \
+        echo 'if [ $? -ne 0 ]; then'; \
+        echo '    echo "jboss-cli is interrupted" 1>&2'; \
+        echo '    exit 1'; \
+        echo 'fi'; \
         echo; \
         echo '[[ "${WILDFLY_MARKERFILES,,}" == "false" ]] && ./sync_deployments.sh &'; \
         echo; \
@@ -441,7 +448,7 @@ RUN echo && echo && \
     echo "  |____ 10. create textfiles 'versions' and 'entrypoints'" && \
 	{ \
 		echo "  Build-Date (WildFly-Img): $(date +%Y-%m-%d)"; \
-		echo "  Distribution            : $(cat /etc/os-release | grep -E '^NAME' | cut -d'"' -f2) v$(cat /etc/os-release | grep 'VERSION_ID' | cut -d'=' -f2 | sed 's/\"//g')"; \
+		echo "  Distribution            : $(cat /etc/os-release | grep -E '^NAME' | cut -d'"' -f2) v$(cat /etc/debian_version)"; \
 		echo "  Java                    : $(java -version 2>&1 | head -n1 | sed -r 's/^.+"(.+)".+$/\1/' | cat)"; \
 		echo "  WildFly                 : $(${WILDFLY_HOME}/bin/standalone.sh -version --admin-only | grep WildFly | sed -r 's/^[^(]+ ([0-9\.]+Final).+$/\1/' | cat)"; \
 		echo "  MySQL-Connector         : ${MYSQL_CONNECTOR_VERSION}"; \
