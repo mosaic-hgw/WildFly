@@ -1,5 +1,12 @@
 ### Change-History
-* `24.0.1.Final-20210917`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `24.0.1.Final-20211214`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  Debian 11.1
+  - updated:  KeyCloak-Client 15.1.0
+  - updated:  openJRE 11.0.13
+  - updated:  mySQL-connector to v8.0.27
+  - added:    env-variable TZ=Europe/Berlin
+  - added:    env-variable LOG4J_FORMAT_MSG_NO_LOOKUPS=true
+* `24.0.1.Final-20210917`
   - fixed:    script healthcheck.sh
 * `24.0.1.Final-20210823`
   - from:     debian:bullseye-slim
