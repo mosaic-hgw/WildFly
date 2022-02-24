@@ -17,14 +17,15 @@ Entrypoints are directories in the container that can be mounted as volumes.
 * `/entrypoint-wildfly-cli` to execute jBoss-cli-files before start WildFly (read-only access)
 * `/entrypoint-wildfly-deployments` to import your deployments, also ear- and/or war-files (read-only access, optional write access)
 * `/entrypoint-wildfly-logs` to export all available log-files (read/write access)
+* `/entrypoint-wildfly-addins` to import additionals files for deployments (read-only access)
 * `/entrypoint-java-cacerts` to change the cacerts with your own (read-only access)
 
 ## Useful Environment-Variables
-- `ADMIN_USER` define username for wildfly-admin, default: admin
-- `WILDFLY_PASS` to set password for wildfly-admin, default is a random-string
-- `NO_ADMIN` set "true", if you don't need wildfly-admin
-- `HEALTHCHECK_URLS` contain a list of urls to check the health of this container, default is empty
-- `TZ` to change timezone, default: Europe/Berlin
+* `ADMIN_USER` define username for wildfly-admin, default: admin
+* `WILDFLY_PASS` to set password for wildfly-admin, default is a random-string
+* `NO_ADMIN` set "true", if you don't need wildfly-admin
+* `HEALTHCHECK_URLS` contain a list of urls to check the health of this container, default is empty
+* `TZ` to change timezone, default: Europe/Berlin
 
 ## About Health-Check-Strategies
 There are 3 strategies built into this docker image.
@@ -37,13 +38,13 @@ There are 3 strategies built into this docker image.
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ## Current Software-Versions on this Image
-* `24.0.1.Final-20211214`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
-  - **Debian** 11.1 "bullseye"
-  - **openJRE** 11.0.13
+* `24.0.1.Final-20220224`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - **Debian** 11.2 "bullseye"
+  - **openJRE** 11.0.14.1
   - **WildFly** 24.0.1.Final
-  - **KeyCloak-Client** 15.1.0
-  - **EclipseLink** 2.7.9
-  - **mySQL-connector** 8.0.27
+  - **KeyCloak-Client** 17.0.0
+  - **EclipseLink** 2.7.10
+  - **mySQL-connector** 8.0.28
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
 ## Run Image
