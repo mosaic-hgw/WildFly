@@ -23,59 +23,61 @@ FROM debian:bullseye-slim
 MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 
 # variables
-ENV MAVEN_REPOSITORY                https://repo1.maven.org/maven2
+ENV USER="mosaic" \
+    HOME="/opt/mosaic"
 
-ENV WILDFLY_VERSION                 24.0.1.Final
-ENV WILDFLY_DOWNLOAD_URL            https://download.jboss.org/wildfly/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz
-ENV WILDFLY_SHA256                  783f3c2f980779873abc70bc9517511d6506936c1b611c028e773ee91e54ee8f
+ARG MAVEN_REPOSITORY="https://repo1.maven.org/maven2"
 
-ENV MYSQL_CONNECTOR_VERSION         8.0.28
-ENV MYSQL_CONNECTOR_DOWNLOAD_URL    ${MAVEN_REPOSITORY}/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar
-ENV MYSQL_CONNECTOR_SHA256          a00ccdf537ff50e50067b989108c2235197ffb65e197149bbb669db843cd1c3e
+ARG WILDFLY_VERSION="26.1.2.Final"
+ARG WILDFLY_DOWNLOAD_URL="https://github.com/wildfly/wildfly/releases/download/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz"
+ARG WILDFLY_SHA256="dd2a97e7bf32a13adfc6782868afb5e48fb033b83480fc5bf94128807a83b17c"
 
-ENV ECLIPSELINK_VERSION             2.7.10
-ENV ECLIPSELINK_DOWNLOAD_URL        ${MAVEN_REPOSITORY}/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar
-ENV ECLIPSELINK_PATH                modules/system/layers/base/org/eclipse/persistence/main
-ENV ECLIPSELINK_SHA256              7f1acc7609d9323d1ba46046376e59bd72882b1652c96747b3cbaa2c63bf767d
+ARG MYSQL_CONNECTOR_VERSION="8.0.30"
+ARG MYSQL_CONNECTOR_DOWNLOAD_URL="${MAVEN_REPOSITORY}/mysql/mysql-connector-java/${MYSQL_CONNECTOR_VERSION}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar"
+ARG MYSQL_CONNECTOR_SHA256="b5bf2f0987197c30adf74a9e419b89cda4c257da2d1142871f508416d5f2227a"
 
-ENV WAIT_FOR_IT_COMMIT_HASH         ed77b63706ea721766a62ff22d3a251d8b4a6a30
-ENV WAIT_FOR_IT_DOWNLOAD_URL        https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh
-ENV WAIT_FOR_IT_SHA256              2ea7475e07674e4f6c1093b4ad6b0d8cbbc6f9c65c73902fb70861aa66a6fbc0
+ARG ECLIPSELINK_VERSION="2.7.11"
+ARG ECLIPSELINK_DOWNLOAD_URL="${MAVEN_REPOSITORY}/org/eclipse/persistence/eclipselink/${ECLIPSELINK_VERSION}/eclipselink-${ECLIPSELINK_VERSION}.jar"
+ARG ECLIPSELINK_PATH="modules/system/layers/base/org/eclipse/persistence/main"
+ARG ECLIPSELINK_SHA256="9c65f29ae301fa516dcefe13fd4e589acdb338be47d8ef66df37581b83bf643e"
 
-ENV KEYCLOAK_VERSION                17.0.0
-ENV KEYCLOAK_DOWNLOAD_URL           https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-oidc-wildfly-adapter-${KEYCLOAK_VERSION}.tar.gz
-ENV KEYCLOAK_SHA256                 4b188d1e6957caf73fe40db81d92d24b44cca186c5a35700d4a4d533800d1b4d
+ARG WAIT_FOR_IT_COMMIT_HASH="ed77b63706ea721766a62ff22d3a251d8b4a6a30"
+ARG WAIT_FOR_IT_DOWNLOAD_URL="https://raw.githubusercontent.com/vishnubob/wait-for-it/${WAIT_FOR_IT_COMMIT_HASH}/wait-for-it.sh"
+ARG WAIT_FOR_IT_SHA256="2ea7475e07674e4f6c1093b4ad6b0d8cbbc6f9c65c73902fb70861aa66a6fbc0"
 
-ENV JAVA_VERSION                    11
-ENV JAVA_HOME                       /usr/lib/jvm/zulu${JAVA_VERSION}
+ARG KEYCLOAK_VERSION="19.0.2"
+ARG KEYCLOAK_DOWNLOAD_URL="https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-oidc-wildfly-adapter-${KEYCLOAK_VERSION}.tar.gz"
+ARG KEYCLOAK_SHA256="865459c17dfee9b6da986e11c268fe0f6fe96bf84af038738165123334d28feb"
 
-ENV USER                            mosaic
-ENV PROCESS_UID                     1000
-ENV PROCESS_GID                     1000
-ENV HOME                            /opt/${USER}
-ENV WILDFLY_HOME                    ${HOME}/wildfly
-ENV WILDFLY_MARKERFILES             auto
-ENV ADMIN_USER                      admin
-ENV JBOSS_CLI                       ${WILDFLY_HOME}/bin/jboss-cli.sh
-ENV READY_PATH                      ${HOME}/ready
-ENV INTERNAL_CLI_PATH               ${HOME}/internal_cli
-ENV DEBUGGING                       false
-ENV LAUNCH_JBOSS_IN_BACKGROUND      true
-ENV TEMP_PATH                       /opt/temp
-ENV TZ                              Europe/Berlin
-ENV LOG4J_FORMAT_MSG_NO_LOOKUPS     true
-
-ENV ENTRY_WILDFLY_CLI               /entrypoint-wildfly-cli
-ENV ENTRY_WILDFLY_DEPLOYS           /entrypoint-wildfly-deployments
-ENV ENTRY_WILDFLY_LOGS              /entrypoint-wildfly-logs
-ENV ENTRY_WILDFLY_ADDINS            /entrypoint-wildfly-addins
-ENV ENTRY_JAVA_CACERTS              /entrypoint-java-cacerts
+ARG JAVA_VERSION="17"
+ENV JAVA_HOME="/usr/lib/jvm/zulu${JAVA_VERSION}" \
+    \
+    PROCESS_UID="1000" \
+    PROCESS_GID="1000" \
+    TZ="Europe/Berlin" \
+    WILDFLY_HOME="${HOME}/wildfly" \
+    WF_MARKERFILES="auto"\
+    WF_ADMIN_USER="admin" \
+    WF_READY_PATH="${HOME}/ready" \
+    WF_INTERNAL_CLI_PATH="${HOME}/internal_cli" \
+    WF_TEMP_PATH="/opt/temp" \
+    WF_DEBUG="false" \
+    DEBUG_PORT="*:8787" \
+    JBOSS_CLI="${HOME}/wildfly/bin/jboss-cli.sh" \
+    LAUNCH_JBOSS_IN_BACKGROUND="true" \
+    LOG4J_FORMAT_MSG_NO_LOOKUPS="true" \
+    \
+    ENTRY_WILDFLY_CLI="/entrypoint-wildfly-cli" \
+    ENTRY_WILDFLY_DEPLOYS="/entrypoint-wildfly-deployments" \
+    ENTRY_WILDFLY_LOGS="/entrypoint-wildfly-logs" \
+    ENTRY_WILDFLY_ADDINS="/entrypoint-wildfly-addins" \
+    ENTRY_JAVA_CACERTS="/entrypoint-java-cacerts"
 
 # annotations
 LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
       org.opencontainers.image.authors     = "university-medicine greifswald" \
       org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "24.0.1.Final-20220224" \
+      org.opencontainers.image.version     = "26.1.2.Final-20220929" \
       org.opencontainers.image.vendor      = "uni-greifswald.de" \
       org.opencontainers.image.title       = "mosaic-wildfly" \
       org.opencontainers.image.license     = "AGPLv3" \
@@ -97,12 +99,12 @@ RUN echo && echo && \
     chmod 755 ${HOME} && \
     \
     echo "  |____ 3. create folders and permissions" && \
-    mkdir ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${TEMP_PATH} ${INTERNAL_CLI_PATH} && \
-    chmod go+w ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${INTERNAL_CLI_PATH} && \
-    chown ${USER}:${USER} ${ENTRY_WILDFLY_CLI} ${READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${INTERNAL_CLI_PATH} && \
+    mkdir ${ENTRY_WILDFLY_CLI} ${WF_READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${WF_TEMP_PATH} ${WF_INTERNAL_CLI_PATH} && \
+    chmod go+w ${ENTRY_WILDFLY_CLI} ${WF_READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${WF_INTERNAL_CLI_PATH} && \
+    chown ${USER}:${USER} ${ENTRY_WILDFLY_CLI} ${WF_READY_PATH} ${ENTRY_WILDFLY_DEPLOYS} ${WF_INTERNAL_CLI_PATH} && \
     \
     echo "  |____ 4. install missing packages (curl, gnupg, jre)" && \
-    cd ${TEMP_PATH}/ && \
+    cd ${WF_TEMP_PATH}/ && \
     (( \
         apt-get install -y gnupg curl && \
         apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xB1998361219BD9C9 && \
@@ -114,7 +116,7 @@ RUN echo && echo && \
     \
     echo "  |____ 5. install wildfly" && \
     echo -n "  |  |____ 1. download " && \
-    (curl -Lso wildfly.tar.gz ${WILDFLY_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
+    (curl -Lso wildfly.tar.gz ${WILDFLY_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso wildfly.tar.gz ${WILDFLY_DOWNLOAD_URL}\n" && exit 1))  && \
     echo "($(du -h wildfly.tar.gz | cut -f1))" && \
     echo "  |  |____ 2. check checksum" && \
     (sha256sum wildfly.tar.gz | grep -q ${WILDFLY_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum wildfly.tar.gz)" && exit 1)) && \
@@ -130,11 +132,11 @@ RUN echo && echo && \
     \
     echo "  |____ 6. download additional components" && \
     echo "  |  |____ 1. download mysql-connector" && \
-    (curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
+    (curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL}\n" && exit 1))  && \
     (sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep -q ${MYSQL_CONNECTOR_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar)" && exit 1)) && \
     \
     echo "  |  |____ 2. download/install eclipslink" && \
-    (curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
+    (curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL}\n" && exit 1))  && \
     (sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep -q ${ECLIPSELINK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
     sed -i "s/<\/resources>/\n \
         <resource-root path=\"eclipselink-${ECLIPSELINK_VERSION}.jar\">\n \
@@ -146,52 +148,52 @@ RUN echo && echo && \
     chown -R ${USER}:${USER} ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
     \
     echo "  |  |____ 3. download wait-for-it-script" && \
-    (curl -Lso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
+    (curl -Lso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL}\n" && exit 1))  && \
     (sha256sum ${HOME}/wait-for-it.sh | grep -q ${WAIT_FOR_IT_SHA256} > /dev/null || (>&2 echo "sha256sum failed $(sha256sum ${HOME}/wait-for-it.sh)" && exit 1)) && \
     chmod +x ${HOME}/wait-for-it.sh && \
     \
     echo "  |____ 7. install keycloack-client" && \
     echo "  |  |____ 1. download" && \
-    (curl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\n" && exit 1))  && \
+    (curl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL}\n" && exit 1))  && \
     echo "  |  |____ 2. check checksum" && \
     (sha256sum keycloak.tar.gz | grep -q ${KEYCLOAK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum keycloak.tar.gz)" && exit 1)) && \
     echo "  |  |____ 3. extract" && \
     tar -xf keycloak.tar.gz -C ${WILDFLY_HOME} && \
     echo "  |  |____ 4. install" && \
-    ($JBOSS_CLI --file=${WILDFLY_HOME}/bin/adapter-install-offline.cli > install.log 2>&1 || (>&2 cat install.log && exit 1)) && \
+    ($JBOSS_CLI --file=${WILDFLY_HOME}/bin/adapter-elytron-install-offline.cli > install.log 2>&1 || (>&2 cat install.log && exit 1)) && \
     \
     echo "  |____ 8. create bash-scripts" && \
     cd ${HOME} && { \
         echo '#!/bin/bash'; \
         echo; \
-        echo 'if [ ! -f "'${READY_PATH}'/admin.created" ]; then'; \
+        echo 'if [ ! -f "'${WF_READY_PATH}'/admin.created" ]; then'; \
         echo '    echo "========================================================================="'; \
         echo '    echo'; \
-        echo '    if [ -z "${NO_ADMIN}" ]; then'; \
+        echo '    if [ -z "${WF_NO_ADMIN}" ]; then'; \
         echo '        echo -e "\033[1;37m  You can configure this WildFly-Server using:\033[0m"'; \
-        echo '        echo -e "\033[1;37m    Username: '${ADMIN_USER}'\033[0m"'; \
-        echo '        if [ -z "${WILDFLY_PASS}" ]; then'; \
-        echo '            WILDFLY_PASS=$(tr -cd "[:alnum:]" < /dev/urandom | head -c20)'; \
-        echo '            echo -e "\033[1;37m    Password: ${WILDFLY_PASS}\033[0m"'; \
+        echo '        echo -e "\033[1;37m    Username: ${WF_ADMIN_USER}\033[0m"'; \
+        echo '        if [ -z "${WF_ADMIN_PASS}" ]; then'; \
+        echo '            WF_ADMIN_PASS=$(tr -cd "[:alnum:]" < /dev/urandom | head -c20)'; \
+        echo '            echo -e "\033[1;37m    Password: ${WF_ADMIN_PASS}\033[0m"'; \
         echo '            echo -e "\033[1;37m  The password is displayed here only this once.\033[0m"'; \
         echo '        else'; \
         echo '            echo -e "\033[1;37m    Password: ***known***\033[0m"'; \
         echo '        fi'; \
-        echo '        '${WILDFLY_HOME}'/bin/add-user.sh '${ADMIN_USER}' ${WILDFLY_PASS} > create_admin.log'; \
+        echo '        '${WILDFLY_HOME}'/bin/add-user.sh ${WF_ADMIN_USER} ${WF_ADMIN_PASS} > create_admin.log'; \
         echo '        cat create_admin.log'; \
         echo '    else'; \
         echo '        echo "  You can NOT configure this WildFly-Server"'; \
         echo '        echo "  because no admin-user was created."'; \
         echo '    fi'; \
         echo '    echo'; \
-        echo '    touch '${READY_PATH}'/admin.created'; \
+        echo '    touch '${WF_READY_PATH}'/admin.created'; \
         echo 'fi'; \
     } > create_wildfly_admin.sh && \
     \
     { \
         echo '#!/bin/bash'; \
         echo; \
-        echo '[ -f '${READY_PATH}'/jboss_cli_block ] && exit 1'; \
+        echo '[ -f '${WF_READY_PATH}'/jboss_cli_block ] && exit 1'; \
         echo '[[ $(curl -sI http://localhost:8080 | head -n 1) != *"200"* ]] && exit 1'; \
         echo 'exit 0'; \
     } > wildfly_started.sh && \
@@ -200,33 +202,33 @@ RUN echo && echo && \
     { \
         echo '#!/bin/bash'; \
         echo; \
-        echo '[ -f '${READY_PATH}'/jboss_cli_block ] && exit 1'; \
+        echo '[ -f '${WF_READY_PATH}'/jboss_cli_block ] && exit 1'; \
         echo; \
         echo '# check is wildfly running'; \
         echo './wildfly_started.sh || (echo "wildfly not running" && exit 1)'; \
         echo; \
-        echo '# if set HEALTHCHECK_URLS via env-variable, then check this for request-code 200'; \
-        echo 'if [ ! -z "$HEALTHCHECK_URLS" ]'; \
+        echo '# if set WF_HEALTHCHECK_URLS via env-variable, then check this for request-code 200'; \
+        echo 'if [ ! -z "$WF_HEALTHCHECK_URLS" ]'; \
         echo 'then'; \
         echo '    echo "using healthcheck-urls"'; \
         echo '    while read DEPLOYMENT_URL'; \
         echo '    do'; \
         echo '        [ -z ${DEPLOYMENT_URL} ] && continue'; \
-        /bin/echo -e '        URL_STATE=$(curl -sNIX GET ${DEPLOYMENT_URL} | head -n 1)'; \
+        /bin/echo -e '        URL_STATE=$(curl -sLNIX GET ${DEPLOYMENT_URL} | grep -E "HTTP/[0-9\.]+ [0-9]{3}" | tail -n1)'; \
         echo '        echo " > ${DEPLOYMENT_URL}: ${URL_STATE}"'; \
         echo '        if [[ $URL_STATE != *"200"* ]]'; \
         echo '        then'; \
         /bin/echo -e '            echo "url \x27${DEPLOYMENT_URL}\x27 has returned \x27${URL_STATE//[$\x27\\t\\r\\n\x27]}\x27, expected 200"'; \
         echo '            exit 1'; \
         echo '        fi'; \
-        echo '    done < <(echo "$HEALTHCHECK_URLS" | sed "s/ /\\n/g")'; \
+        echo '    done < <(echo "$WF_HEALTHCHECK_URLS" | sed "s/ /\\n/g")'; \
         echo 'fi'; \
         echo; \
-        echo '# if set WILDFLY_PASS, then check deployments via managemant-tool'; \
-        echo 'if [ ! -z $WILDFLY_PASS ]'; \
+        echo '# if set WF_ADMIN_PASS, then check deployments via managemant-tool'; \
+        echo 'if [ ! -z $WF_ADMIN_PASS ]'; \
         echo 'then'; \
         echo '    echo "using wildfly-password"'; \
-        echo '    MGNT_URL="http://${ADMIN_USER}:${WILDFLY_PASS}@localhost:9990/management"'; \
+        echo '    MGNT_URL="http://${WF_ADMIN_USER}:${WF_ADMIN_PASS}@localhost:9990/management"'; \
         /bin/echo -e '    DEPLOYMENTS=$(curl -sk --digest "${MGNT_URL}" | grep -oE \x27"deployment" ?: ?(null|\{[^}]*\}),\x27 | sed -r \x27s/([": \{\}]|deployment|null)//g;s/,/\\n/g;s/\\n$//\x27)'; \
         echo '    while read DEPLOYMENT'; \
         echo '    do'; \
@@ -241,7 +243,7 @@ RUN echo && echo && \
         echo 'fi'; \
         echo; \
         echo '# if both are not set, use as fallback-variant the jboss-cli to check deployment-states'; \
-        echo 'if [ -z $WILDFLY_PASS ] && [ -z "$HEALTHCHECK_URLS" ]'; \
+        echo 'if [ -z $WF_ADMIN_PASS ] && [ -z "$WF_HEALTHCHECK_URLS" ]'; \
         echo 'then'; \
         echo '    echo "using fallback-variant"'; \
         /bin/echo -e '    DEPLOYMENTS=$($JBOSS_CLI -c "deployment-info" | awk \x27{if (NR!=1) {print $1,$NF}}\x27)'; \
@@ -266,14 +268,14 @@ RUN echo && echo && \
         echo; \
         echo 'echo "========================================================================="'; \
         echo; \
-        echo 'if [ "$ADD_CLI_FILTER" ]; then'; \
-        echo '    CLI_FILTER="(\.cli|\.${ADD_CLI_FILTER/[, |]+/|\\.})"'; \
+        echo 'if [ "$WF_ADD_CLI_FILTER" ]; then'; \
+        echo '    CLI_FILTER="(\.cli|\.${WF_ADD_CLI_FILTER/[, |]+/|\\.})"'; \
         echo 'else'; \
         echo '    CLI_FILTER="\.cli"'; \
         echo 'fi'; \
         echo; \
-        echo 'BATCH_FILES=$(comm -23 --nocheck-order <(ls '${ENTRY_WILDFLY_CLI}' '${INTERNAL_CLI_PATH}' 2> /dev/null | grep -v "/" | grep -E "$CLI_FILTER$" | grep -v .completed) \\'; \
-        echo '    <(ls '${READY_PATH}' 2> /dev/null | grep .completed | sed "s/\.completed$//"))'; \
+        echo 'BATCH_FILES=$(comm -23 --nocheck-order <(ls '${ENTRY_WILDFLY_CLI}' '${WF_INTERNAL_CLI_PATH}' 2> /dev/null | grep -v "/" | grep -E "$CLI_FILTER$" | grep -v .completed) \\'; \
+        echo '    <(ls '${WF_READY_PATH}' 2> /dev/null | grep .completed | sed "s/\.completed$//"))'; \
         echo; \
         echo 'echo "  $(echo ${BATCH_FILES} | wc -w) cli-file(s) found to execute with jboss-cli.sh"'; \
         echo 'echo "  filter: ${CLI_FILTER}"'; \
@@ -282,7 +284,7 @@ RUN echo && echo && \
         echo; \
         echo 'if [ $(echo ${BATCH_FILES} | wc -w) -gt 0 ]; then'; \
         echo '    env > env.properties'; \
-        echo '    touch '${READY_PATH}'/jboss_cli_block'; \
+        echo '    touch '${WF_READY_PATH}'/jboss_cli_block'; \
         echo; \
         echo '    '${WILDFLY_HOME}'/bin/standalone.sh --admin-only &'; \
         echo '    until `'${JBOSS_CLI}' -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running`; do sleep 1; done;'; \
@@ -292,17 +294,17 @@ RUN echo && echo && \
         echo '            echo "execute jboss-batchfile \"${BATCH_FILE}\""'; \
         echo '            '${JBOSS_CLI}' -c --properties=env.properties --file='${ENTRY_WILDFLY_CLI}'/${BATCH_FILE}'; \
         echo '            if [ $? -eq 0 ]; then'; \
-        echo '                touch '${READY_PATH}'/${BATCH_FILE}.completed'; \
+        echo '                touch '${WF_READY_PATH}'/${BATCH_FILE}.completed'; \
         echo '            else'; \
         echo '                echo "JBoss-Batchfile \"${BATCH_FILE}\" can not be execute"'; \
         echo '                '${JBOSS_CLI}' -c ":shutdown"'; \
         echo '                exit 125'; \
         echo '            fi'; \
-        echo '        elif [ -f "'${INTERNAL_CLI_PATH}'/${BATCH_FILE}" ]; then'; \
+        echo '        elif [ -f "'${WF_INTERNAL_CLI_PATH}'/${BATCH_FILE}" ]; then'; \
         echo '            echo "execute internal jboss-batchfile \"${BATCH_FILE}\""'; \
-        echo '            '${JBOSS_CLI}' -c --properties=env.properties --file='${INTERNAL_CLI_PATH}'/${BATCH_FILE}'; \
+        echo '            '${JBOSS_CLI}' -c --properties=env.properties --file='${WF_INTERNAL_CLI_PATH}'/${BATCH_FILE}'; \
         echo '            if [ $? -eq 0 ]; then'; \
-        echo '                touch '${READY_PATH}'/${BATCH_FILE}.completed'; \
+        echo '                touch '${WF_READY_PATH}'/${BATCH_FILE}.completed'; \
         echo '            else'; \
         echo '                echo "internal JBoss-Batchfile \"${BATCH_FILE}\" can not be execute"'; \
         echo '                '${JBOSS_CLI}' -c ":shutdown"'; \
@@ -314,7 +316,7 @@ RUN echo && echo && \
         echo 'fi'; \
         echo; \
         echo 'rm -f '${WILDFLY_HOME}'/standalone/configuration/standalone_xml_history/current/*'; \
-        echo 'rm -f '${READY_PATH}'/jboss_cli_block env.properties'; \
+        echo 'rm -f '${WF_READY_PATH}'/jboss_cli_block env.properties'; \
         echo 'exit 0'; \
     } > add_jboss_cli.sh && \
     \
@@ -381,20 +383,20 @@ RUN echo && echo && \
         echo; \
         echo './create_wildfly_admin.sh'; \
         echo; \
-        echo 'if [[ ! ${WILDFLY_MARKERFILES,,} =~ ^(true|false)$ ]]; then'; \
-        echo '    WILDFLY_MARKERFILES=$((touch ${ENTRY_WILDFLY_DEPLOYS}/mf.test && rm ${ENTRY_WILDFLY_DEPLOYS}/mf.test) 2>/dev/null && echo "true" || echo "false")'; \
+        echo 'if [[ ! ${WF_MARKERFILES,,} =~ ^(true|false)$ ]]; then'; \
+        echo '    WF_MARKERFILES=$((touch ${ENTRY_WILDFLY_DEPLOYS}/mf.test && rm ${ENTRY_WILDFLY_DEPLOYS}/mf.test) 2>/dev/null && echo "true" || echo "false")'; \
         echo 'fi'; \
         echo; \
-        echo 'if [[ "${WILDFLY_MARKERFILES,,}" != "$(cat '${READY_PATH}'/markerfiles_mode)" ]]; then'; \
-        echo '    echo -n "${WILDFLY_MARKERFILES,,}" > '${READY_PATH}'/markerfiles_mode'; \
-        echo '    if [[ "${WILDFLY_MARKERFILES,,}" == "false" ]]; then'; \
-        echo '        echo "/subsystem=deployment-scanner/scanner=default:write-attribute(name=\\"scan-enabled\\",value=true)" > '${INTERNAL_CLI_PATH}'/markerfiles.cli'; \
-        echo '        echo "/subsystem=deployment-scanner/scanner=entrypoint:write-attribute(name=\\"scan-enabled\\",value=false)" >> '${INTERNAL_CLI_PATH}'/markerfiles.cli'; \
+        echo 'if [[ "${WF_MARKERFILES,,}" != "$(cat '${WF_READY_PATH}'/markerfiles_mode)" ]]; then'; \
+        echo '    echo -n "${WF_MARKERFILES,,}" > '${WF_READY_PATH}'/markerfiles_mode'; \
+        echo '    if [[ "${WF_MARKERFILES,,}" == "false" ]]; then'; \
+        echo '        echo "/subsystem=deployment-scanner/scanner=default:write-attribute(name=\\"scan-enabled\\",value=true)" > '${WF_INTERNAL_CLI_PATH}'/markerfiles.cli'; \
+        echo '        echo "/subsystem=deployment-scanner/scanner=entrypoint:write-attribute(name=\\"scan-enabled\\",value=false)" >> '${WF_INTERNAL_CLI_PATH}'/markerfiles.cli'; \
         echo '    else'; \
-        echo '        echo "/subsystem=deployment-scanner/scanner=default:write-attribute(name=\\"scan-enabled\\",value=false)" > '${INTERNAL_CLI_PATH}'/markerfiles.cli'; \
-        echo '        echo "/subsystem=deployment-scanner/scanner=entrypoint:write-attribute(name=\\"scan-enabled\\",value=true)" >> '${INTERNAL_CLI_PATH}'/markerfiles.cli'; \
+        echo '        echo "/subsystem=deployment-scanner/scanner=default:write-attribute(name=\\"scan-enabled\\",value=false)" > '${WF_INTERNAL_CLI_PATH}'/markerfiles.cli'; \
+        echo '        echo "/subsystem=deployment-scanner/scanner=entrypoint:write-attribute(name=\\"scan-enabled\\",value=true)" >> '${WF_INTERNAL_CLI_PATH}'/markerfiles.cli'; \
         echo '    fi'; \
-        echo '    rm -f '${READY_PATH}'/markerfiles.cli.completed'; \
+        echo '    rm -f '${WF_READY_PATH}'/markerfiles.cli.completed'; \
         echo 'fi'; \
         echo; \
         echo './add_jboss_cli.sh'; \
@@ -403,10 +405,10 @@ RUN echo && echo && \
         echo '    exit 1'; \
         echo 'fi'; \
         echo; \
-        echo '[[ "${WILDFLY_MARKERFILES,,}" == "false" ]] && ./sync_deployments.sh &'; \
+        echo '[[ "${WF_MARKERFILES,,}" == "false" ]] && ./sync_deployments.sh &'; \
         echo; \
         echo 'rm -f '${WILDFLY_HOME}'/standalone/configuration/standalone_xml_history/current/*'; \
-        echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${DEBUGGING}" = "true" ] && echo "--debug")'; \
+        echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${WF_DEBUG}" = "true" ] && echo "--debug")'; \
     } > run_wildfly.sh && \
     \
     { \
@@ -438,19 +440,19 @@ RUN echo && echo && \
     TIMEOUT=30 && \
     (until `./wildfly_started.sh`;do sleep 1;echo -n '.';if [ $(($(date +%s)-STARTTIME)) -ge $TIMEOUT ];then echo;cat install.log;echo;exit 1;fi;done;echo -e "\r  |  |____ 1. start app-server $(printf %-30s '('$(($(date +%s)-STARTTIME))'s)')") && \
     echo "  |  |____ 2. install mysql-connector" && \
-    ($JBOSS_CLI -c "module add --name=com.mysql --resources=${TEMP_PATH}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" > install.log || (>&2 cat install.log && exit 1)) && \
+    ($JBOSS_CLI -c "module add --name=com.mysql --resources=${WF_TEMP_PATH}/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar --dependencies=javax.api\,javax.transaction.api" > install.log || (>&2 cat install.log && exit 1)) && \
     echo "  |  |____ 3. add datasource-driver for mysql" && \
     ($JBOSS_CLI -c "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-class-name=com.mysql.cj.jdbc.Driver)" > install.log || (>&2 cat install.log && exit 1)) && \
     echo "  |  |____ 4. add deployment-scanner" && \
     ($JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=default:write-attribute(name=scan-enabled,value=false)" > install.log || (>&2 cat install.log && exit 1)) && \
     ($JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=entrypoint:add(scan-interval=5000,path=${ENTRY_WILDFLY_DEPLOYS})" > install.log || (>&2 cat install.log && exit 1)) && \
-    echo -n "true" > ${READY_PATH}/markerfiles_mode && \
+    echo -n "true" > ${WF_READY_PATH}/markerfiles_mode && \
     echo "  |  |____ 5. shutdown app-server" && \
     ($JBOSS_CLI -c ":shutdown" > install.log || (>&2 cat install.log && exit 1)) && \
     \
     echo "  |____ 10. create textfiles 'versions' and 'entrypoints'" && \
     { \
-        echo "  Build-Date (WildFly-Img): $(date +%Y-%m-%d)"; \
+        echo "  Build-Date (WildFly-Lay): $(date +%Y-%m-%d)"; \
         echo "  Distribution            : $(cat /etc/os-release | grep -E '^NAME' | cut -d'"' -f2) v$(cat /etc/debian_version)"; \
         echo "  Java                    : $(java -version 2>&1 | head -n1 | sed -r 's/^.+"(.+)".+$/\1/' | cat)"; \
         echo "  WildFly                 : $(${WILDFLY_HOME}/bin/standalone.sh -version --admin-only | grep WildFly | sed -r 's/^[^(]+ ([0-9\.]+Final).+$/\1/' | cat)"; \
@@ -471,7 +473,7 @@ RUN echo && echo && \
         apt-get remove --purge --auto-remove -y gnupg && \
         apt-get clean && \
         apt-get autoremove && \
-        rm -rf ${TEMP_PATH} ${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/* /var/lib/apt/lists/* /var/cache/apt/* && \
+        rm -rf ${WF_TEMP_PATH} ${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/* /var/lib/apt/lists/* /var/cache/apt/* && \
         mkdir ${WILDFLY_HOME}/standalone/data/addins && \
         ln -s ${WILDFLY_HOME}/standalone/log ${ENTRY_WILDFLY_LOGS} && \
         ln -s ${JAVA_HOME}/lib/security/cacerts ${ENTRY_JAVA_CACERTS} && \
