@@ -1,11 +1,18 @@
 ### Change-History
-* `24.0.1.Final-20220224`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `26.1.2.Final-20220929`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - updated:  Debian 11.5
+  - updated:  WildFly 26.1.2.Final
+  - updated:  KeyCloak-Client 19.0.2
+  - updated:  openJRE 17.0.4.1
+  - updated:  EclipseLink 2.7.11
+  - updated:  mySQL-connector v8.0.30
+* `24.0.1.Final-20220224`
   - updated:  Debian 11.2
   - updated:  KeyCloak-Client 17.0.0
   - updated:  openJRE 11.0.14.1
   - updated:  mySQL-connector v8.0.28
   - updated:  EclipseLink 2.7.10
-  - added:    /entrypoint-wildfly-terminology
+  - added:    /entrypoint-wildfly-addins
 * `24.0.1.Final-20211214`
   - updated:  Debian 11.1
   - updated:  KeyCloak-Client 15.1.0
