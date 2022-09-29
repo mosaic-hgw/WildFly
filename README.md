@@ -21,30 +21,36 @@ Entrypoints are directories in the container that can be mounted as volumes.
 * `/entrypoint-java-cacerts` to change the cacerts with your own (read-only access)
 
 ## Useful Environment-Variables
-* `ADMIN_USER` define username for wildfly-admin, default: admin
-* `WILDFLY_PASS` to set password for wildfly-admin, default is a random-string
-* `NO_ADMIN` set "true", if you don't need wildfly-admin
-* `HEALTHCHECK_URLS` contain a list of urls to check the health of this container, default is empty
+Attention: In this version some ENV variables have been renamed!
+* `WF_ADD_CLI_FILTER` define additional pipe-separated file-extensions that jboss-cli should process, default is empty
+* `WF_ADMIN_USER` define username for wildfly-admin, default: admin
+* `WF_ADMIN_PASS` to set password for wildfly-admin, default is a random-string
+* `WF_NO_ADMIN` set "true" if you don't need wildfly-admin, default is empty
+* `WF_HEALTHCHECK_URLS` contain a list of urls to check the health of this container, default is empty
 * `TZ` to change timezone, default: Europe/Berlin
+* `JAVA_OPTS` you need more memory? then give yourself more memory and any more.
+* `WF_MARKERFILES` Available values are "true", "false" and "auto" (default). These affect the creation of marker-files (.isdeploying or .deployed) in the deployment-directory.
+* `WF_DEBUG` set "true" to enable debug-mode in wildfly, default: false
+  btw. with `DEBUG_PORT` you can change the ip:port for debugging, default: *:8787
 
 ## About Health-Check-Strategies
 There are 3 strategies built into this docker image.
 
 * Microprofile-Health<br>
-  This is the default strategy and only works if the `WILDFLY_PASS` variable is set. Then the WildFly management automatically checks all deployments that have the microprofile installed (see https://microprofile.io/project/eclipse/microprofile-health).
+  This is the default strategy and only works if the `WF_ADMIN_PASS` variable is set. Then the WildFly management automatically checks all deployments that have the microprofile installed (see https://microprofile.io/project/eclipse/microprofile-health).
 * URL-check<br>
-  For this strategy at least one accessible URL must be specified as ENV-variable `HEALTHCHECK_URLS`. If a URL is not reachable or does not return the HTTP status code 200, the health status is set to "unhealthly". This strategy can be combined with Microprofile-Health.
+  For this strategy at least one accessible URL must be specified as ENV-variable `WF_HEALTHCHECK_URLS`. If a URL is not reachable or does not return the HTTP status code 200, the health status is set to "unhealthly". This strategy can be combined with Microprofile-Health.
 * Running-Deployments<br>
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ## Current Software-Versions on this Image
-* `24.0.1.Final-20220224`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
-  - **Debian** 11.2 "bullseye"
-  - **openJRE** 11.0.14.1
-  - **WildFly** 24.0.1.Final
-  - **KeyCloak-Client** 17.0.0
-  - **EclipseLink** 2.7.10
-  - **mySQL-connector** 8.0.28
+* `26.1.2.Final-20220929`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+  - **Debian** 11.5 "bullseye"
+  - **openJRE** 17.0.4.1
+  - **WildFly** 26.1.2.Final
+  - **KeyCloak-Client** 19.0.2
+  - **EclipseLink** 2.7.11
+  - **mySQL-connector** 8.0.30
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
 ## Run Image
@@ -59,14 +65,14 @@ There are 3 strategies built into this docker image.
 * if you want to set admin-password by self, you can do it over environment variable
   ```sh
   docker run \
-    -e WILDFLY_PASS=top-secret
+    -e WF_ADMIN_PASS=top-secret
     ...
   ```
 
 * or you don't want to create an admin-user
   ```sh
   docker run \
-    -e NO_ADMIN=true
+    -e WF_NO_ADMIN=true
     ...
   ```
 
@@ -81,17 +87,16 @@ There are 3 strategies built into this docker image.
 * with healthcheck-urls
   ```sh
   docker run \
-    -e HEALTHCHECK_URLS=http://localhost:8080\nhttp://localhost:8080/ths-web/html/public/common/processCompleted.xhtml
+    -e WF_HEALTHCHECK_URLS=http://localhost:8080\nhttp://localhost:8080/ths-web/html/public/common/processCompleted.xhtml
     ...
   ```
 
 ### Use docker-compose
 * over docker-compose with dependent on mysql-db (example)
   ```yaml
-  version: '2'
+  version: '3'
   services:
-
-    app:
+    wildfly:
       image: mosaicgreifswald/wildfly
       ports:
         - 8080:8080
@@ -102,34 +107,30 @@ There are 3 strategies built into this docker image.
 
 * over docker-compose with dependent on mysql-db (example)
   ```yaml
-  version: '2'
+  version: '3'
   services:
-
-    db:
-      image: mysql:5.7
+    mysql:
+      image: mysql:8.0
       environment:
         MYSQL_ROOT_PASSWORD: top-secret
       volumes:
         - /path/to/your/init-sql-files:/docker-entrypoint-initdb.d
-
-    app:
+    wildfly:
       image: mosaicgreifswald/wildfly
       ports:
         - 8080:8080
       depends_on:
-        - db
-      links:
-        - db:app-db
+        - mysql
       environment:
-        WILDFLY_PASS: admin-secret
-        HEALTHCHECK_URLS: |
+        WF_ADMIN_PASS: admin-secret
+        WF_HEALTHCHECK_URLS: |
           http://localhost:8080
-          http://localhost:8080/your/own/success/page.xhtml
+          http://localhost:8080/your/own/success/page.html
       volumes:
         - /path/to/your/batch-files:/entrypoint-wildfly-cli
         - /path/to/your/deployments:/entrypoint-wildfly-deployments
       entrypoint: /bin/bash
-      command: -c "./wait-for-it.sh app-db:3306 -t 60 && ./run.sh"
+      command: -c "./wait-for-it.sh mysql:3306 -t 60 && ./run.sh"
   ```
 
 ### Examples for create JBoss-CLI-File
@@ -138,7 +139,7 @@ There are 3 strategies built into this docker image.
   data-source add \
     --name=MySQLPool \
     --jndi-name=java:/jboss/MySQLDS \
-    --connection-url=jdbc:mysql://app-db:3306/dbName \
+    --connection-url=jdbc:mysql://mysql:3306/dbName \
     --user-name=mosaic \
     --password=top-secret \
     --driver-name=mysql
