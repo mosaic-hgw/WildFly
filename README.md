@@ -44,13 +44,23 @@ There are 3 strategies built into this docker image.
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ## Current Software-Versions on this Image
-* `26.1.2.Final-20220929`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `26.1.2.Final-20221118`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
   - **Debian** 11.5 "bullseye"
-  - **openJRE** 17.0.4.1
+  - **openJRE** 17.0.5
   - **WildFly** 26.1.2.Final
   - **KeyCloak-Client** 19.0.2
   - **EclipseLink** 2.7.11
   - **mySQL-connector** 8.0.30
+  - vulnerable updates:
+    - jackson-databind 2.13.4.2 <small><small>(CVE-2022-42003, CVE-2022-42004)</small></small>
+    - protobuf-java 3.19.6 <small><small>(CVE-2022-3171)</small></small>
+    - artemis-server 2.24.0 <small><small>(CVE-2022-35278)</small></small>
+    - hibernate-core 5.4.24.Final <small><small>(CVE-2020-25638)</small></small>
+    - h2database 2.1.210 <small><small>(CVE-2021-23463, CVE-2021-42392, CVE-2022-23221)</small></small>
+    - jsoup 1.15.3 <small><small>(CVE-2022-36033)</small></small>
+    - snakeyaml 1.32 <small><small>(CVE-2022-25857, CVE-2022-38749, CVE-2022-38750, CVE-2022-38751, CVE-2022-38752)</small></small>
+    - woodstox-core 6.4.0 <small><small>(CVE-2022-40153, CVE-2022-40151, CVE-2022-40152, CVE-2022-40154, CVE-2022-40155, CVE-2022-40156)</small></small>
+    - xercesImpl 2.12.2 <small><small>(CVE-2022-23437)</small></small>
 * [full history](https://github.com/mosaic-hgw/WildFly/blob/master/change_history.md)
 
 ## Run Image
