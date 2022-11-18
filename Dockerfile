@@ -74,14 +74,14 @@ ENV JAVA_HOME="/usr/lib/jvm/zulu${JAVA_VERSION}" \
     ENTRY_JAVA_CACERTS="/entrypoint-java-cacerts"
 
 # annotations
-LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
-      org.opencontainers.image.authors     = "university-medicine greifswald" \
-      org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
-      org.opencontainers.image.version     = "26.1.2.Final-20220929" \
-      org.opencontainers.image.vendor      = "uni-greifswald.de" \
-      org.opencontainers.image.title       = "mosaic-wildfly" \
-      org.opencontainers.image.license     = "AGPLv3" \
-      org.opencontainers.image.description = "This is a Docker image for the Java application server WildFly. The image is based on slim debian-image and prepared for the tools of the university medicine greifswald (but can also be used for other similar projects)."
+LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de"
+LABEL org.opencontainers.image.authors     = "university-medicine greifswald"
+LABEL org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly"
+LABEL org.opencontainers.image.version     = "26.1.2.Final-20221118"
+LABEL org.opencontainers.image.vendor      = "uni-greifswald.de"
+LABEL org.opencontainers.image.title       = "mosaic-wildfly"
+LABEL org.opencontainers.image.license     = "AGPLv3"
+LABEL org.opencontainers.image.description = "This is a Docker image for the Java application server WildFly. The image is based on slim debian-image and prepared for the tools of the university medicine greifswald (but can also be used for other similar projects)."
 
 # create folders and permissions
 RUN echo && echo && \
@@ -130,13 +130,37 @@ RUN echo && echo && \
     echo "  |  |____ 6. set permissions" && \
     chown -R ${USER}:${USER} ${WILDFLY_HOME} && chmod -R g+rw ${WILDFLY_HOME} && \
     \
+    echo "  |  |____ 7. update vulnerable java-libraries" && \
+	I=0 && ( \
+        # format "local-module-path jar-base-name jar-new-version base-download-url" \
+        echo "com/fasterxml/jackson/core/jackson-databind jackson-databind 2.13.4.2 ${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-databind"; \
+        echo "com/google/protobuf protobuf-java 3.19.6 ${MAVEN_REPOSITORY}/com/google/protobuf/protobuf-java"; \
+        echo "org/apache/activemq/artemis artemis-server 2.24.0 ${MAVEN_REPOSITORY}/org/apache/activemq/artemis-server"; \
+        echo "org/hibernate hibernate-core 5.4.24.Final ${MAVEN_REPOSITORY}/org/hibernate/hibernate-core"; \
+        echo "com/h2database/h2 h2 2.1.210 ${MAVEN_REPOSITORY}/com/h2database/h2"; \
+        echo "org/jsoup jsoup 1.15.3 ${MAVEN_REPOSITORY}/org/jsoup/jsoup"; \
+        echo "org/yaml/snakeyaml snakeyaml 1.32 ${MAVEN_REPOSITORY}/org/yaml/snakeyaml"; \
+        echo "org/apache/xerces xercesImpl 2.12.2 ${MAVEN_REPOSITORY}/xerces/xercesImpl"; \
+        echo "org/codehaus/woodstox woodstox-core 6.4.0 ${MAVEN_REPOSITORY}/com/fasterxml/woodstox/woodstox-core"; \
+    ) | while read -r LINE; do I=`expr $I + 1`; \
+		echo "  |     |____ $I. $(echo $LINE | cut -d' ' -f1)" && \
+        MODULE_PATH=${WILDFLY_HOME}/modules/system/layers/base/$(echo $LINE | cut -d' ' -f1)/main && \
+        find ${MODULE_PATH}/ -name "*$(echo $LINE | cut -d' ' -f2)-[0-9]*.jar" -delete && \
+        JAR_FILE="$(echo $LINE | cut -d' ' -f2)-$(echo $LINE | cut -d' ' -f3).jar" && \
+        JAR_URL="$(echo $LINE | cut -d' ' -f4)/$(echo $LINE | cut -d' ' -f3)/${JAR_FILE}" && \
+    	sed -r "s/$(echo $LINE | cut -d' ' -f2)\-[0-9]+.+\.jar/${JAR_FILE}/" -i ${MODULE_PATH}/module.xml && \
+        (curl -Lfso ${MODULE_PATH}/${JAR_FILE} ${JAR_URL} || (>&2 /bin/echo -e "\ncannot download java-library\n${JAR_URL}\n" && exit 1)) ; \
+	done && \
+    \
     echo "  |____ 6. download additional components" && \
-    echo "  |  |____ 1. download mysql-connector" && \
-    (curl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL}\n" && exit 1))  && \
+    echo -n "  |  |____ 1. download mysql-connector " && \
+    (curl -Lfso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lfso mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar ${MYSQL_CONNECTOR_DOWNLOAD_URL}\n" && exit 1))  && \
+    echo "($(du -h mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | cut -f1))" && \
     (sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar | grep -q ${MYSQL_CONNECTOR_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar)" && exit 1)) && \
     \
-    echo "  |  |____ 2. download/install eclipslink" && \
-    (curl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL}\n" && exit 1))  && \
+    echo -n "  |  |____ 2. download/install eclipselink " && \
+    (curl -Lfso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lfso ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar ${ECLIPSELINK_DOWNLOAD_URL}\n" && exit 1))  && \
+    echo "($(du -h ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | cut -f1))" && \
     (sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar | grep -q ${ECLIPSELINK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/eclipselink-${ECLIPSELINK_VERSION}.jar)" && exit 1)) && \
     sed -i "s/<\/resources>/\n \
         <resource-root path=\"eclipselink-${ECLIPSELINK_VERSION}.jar\">\n \
@@ -147,14 +171,16 @@ RUN echo && echo && \
     <\/resources>/" ${WILDFLY_HOME}/${ECLIPSELINK_PATH}/module.xml && \
     chown -R ${USER}:${USER} ${WILDFLY_HOME}/${ECLIPSELINK_PATH} && \
     \
-    echo "  |  |____ 3. download wait-for-it-script" && \
-    (curl -Lso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL}\n" && exit 1))  && \
+    echo -n "  |  |____ 3. download wait-for-it-script " && \
+    (curl -Lfso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lfso ${HOME}/wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL}\n" && exit 1))  && \
+    echo "($(du -h ${HOME}/wait-for-it.sh | cut -f1))" && \
     (sha256sum ${HOME}/wait-for-it.sh | grep -q ${WAIT_FOR_IT_SHA256} > /dev/null || (>&2 echo "sha256sum failed $(sha256sum ${HOME}/wait-for-it.sh)" && exit 1)) && \
     chmod +x ${HOME}/wait-for-it.sh && \
     \
     echo "  |____ 7. install keycloack-client" && \
-    echo "  |  |____ 1. download" && \
-    (curl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL}\n" && exit 1))  && \
+    echo -n "  |  |____ 1. download " && \
+    (curl -Lfso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lfso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL}\n" && exit 1))  && \
+    echo "($(du -h keycloak.tar.gz | cut -f1))" && \
     echo "  |  |____ 2. check checksum" && \
     (sha256sum keycloak.tar.gz | grep -q ${KEYCLOAK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum keycloak.tar.gz)" && exit 1)) && \
     echo "  |  |____ 3. extract" && \
@@ -470,7 +496,7 @@ RUN echo && echo && \
     \
     echo "  |____ 11. cleanup" && \
     (( \
-        apt-get remove --purge --auto-remove -y gnupg && \
+        apt-get remove --purge --auto-remove -y gnupg curl openssl && \
         apt-get clean && \
         apt-get autoremove && \
         rm -rf ${WF_TEMP_PATH} ${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/* /var/lib/apt/lists/* /var/cache/apt/* && \
