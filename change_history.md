@@ -1,5 +1,5 @@
 ### Change-History
-* `26.1.2.Final-20221118`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `26.1.2.Final-20221129`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
   - updated:  openJRE 17.0.5
   - vulnerable updates:
     - jackson-databind 2.13.4.2 <small><small>(CVE-2022-42003, CVE-2022-42004)</small></small>
