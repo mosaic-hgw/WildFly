@@ -77,7 +77,7 @@ ENV JAVA_HOME="/usr/lib/jvm/zulu${JAVA_VERSION}" \
 LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de"
 LABEL org.opencontainers.image.authors     = "university-medicine greifswald"
 LABEL org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly"
-LABEL org.opencontainers.image.version     = "26.1.2.Final-20221118"
+LABEL org.opencontainers.image.version     = "26.1.2.Final-20221129"
 LABEL org.opencontainers.image.vendor      = "uni-greifswald.de"
 LABEL org.opencontainers.image.title       = "mosaic-wildfly"
 LABEL org.opencontainers.image.license     = "AGPLv3"
@@ -496,7 +496,7 @@ RUN echo && echo && \
     \
     echo "  |____ 11. cleanup" && \
     (( \
-        apt-get remove --purge --auto-remove -y gnupg curl openssl && \
+        apt-get remove --purge --auto-remove -y gnupg openssl && \
         apt-get clean && \
         apt-get autoremove && \
         rm -rf ${WF_TEMP_PATH} ${WILDFLY_HOME}/standalone/configuration/standalone_xml_history/current/* /var/lib/apt/lists/* /var/cache/apt/* && \
