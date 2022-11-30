@@ -44,7 +44,7 @@ There are 3 strategies built into this docker image.
   This solution only works if neither of the other two strategies is used. It only checks that none of the deployments has booted incorrectly.
 
 ## Current Software-Versions on this Image
-* `26.1.2.Final-20221118`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
+* `26.1.2.Final-20221129`, `latest` ([Dockerfile](https://github.com/mosaic-hgw/WildFly/blob/master/Dockerfile))
   - **Debian** 11.5 "bullseye"
   - **openJRE** 17.0.5
   - **WildFly** 26.1.2.Final
