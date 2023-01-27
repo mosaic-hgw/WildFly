@@ -3,7 +3,7 @@ FROM debian:bullseye-slim
 # ###license-information-start###
 # The MOSAIC-Project - WildFly with MySQL-Connector and Healthcheck
 # __
-# Copyright (C) 2009 - 2022 Institute for Community Medicine
+# Copyright (C) 2009 - 2023 Institute for Community Medicine
 # University Medicine of Greifswald - mosaic-project@uni-greifswald.de
 # __
 # This program is free software: you can redistribute it and/or modify
@@ -26,6 +26,7 @@ MAINTAINER Ronny Schuldt <ronny.schuldt@uni-greifswald.de>
 ENV USER="mosaic" \
     HOME="/opt/mosaic"
 
+ARG SKIP_VULNERABILITIES_FIX="false"
 ARG MAVEN_REPOSITORY="https://repo1.maven.org/maven2"
 
 ARG WILDFLY_VERSION="26.1.2.Final"
@@ -74,14 +75,14 @@ ENV JAVA_HOME="/usr/lib/jvm/zulu${JAVA_VERSION}" \
     ENTRY_JAVA_CACERTS="/entrypoint-java-cacerts"
 
 # annotations
-LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de"
-LABEL org.opencontainers.image.authors     = "university-medicine greifswald"
-LABEL org.opencontainers.image.source      = "https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly"
-LABEL org.opencontainers.image.version     = "26.1.2.Final-20221129"
-LABEL org.opencontainers.image.vendor      = "uni-greifswald.de"
-LABEL org.opencontainers.image.title       = "mosaic-wildfly"
-LABEL org.opencontainers.image.license     = "AGPLv3"
-LABEL org.opencontainers.image.description = "This is a Docker image for the Java application server WildFly. The image is based on slim debian-image and prepared for the tools of the university medicine greifswald (but can also be used for other similar projects)."
+LABEL maintainer="ronny.schuldt@uni-greifswald.de" \
+      org.opencontainers.image.authors="university-medicine greifswald" \
+      org.opencontainers.image.source="https://hub.docker.com/repository/docker/mosaicgreifswald/wildfly" \
+      org.opencontainers.image.version="26.1.2.Final-20230127" \
+      org.opencontainers.image.vendor="uni-greifswald.de" \
+      org.opencontainers.image.title="mosaic-wildfly" \
+      org.opencontainers.image.license="AGPLv3" \
+      org.opencontainers.image.description="This is a Docker image for the Java application server WildFly. The image is based on slim debian-image and prepared for the tools of the university medicine greifswald (but can also be used for other similar projects)."
 
 # create folders and permissions
 RUN echo && echo && \
@@ -130,27 +131,40 @@ RUN echo && echo && \
     echo "  |  |____ 6. set permissions" && \
     chown -R ${USER}:${USER} ${WILDFLY_HOME} && chmod -R g+rw ${WILDFLY_HOME} && \
     \
-    echo "  |  |____ 7. update vulnerable java-libraries" && \
-	I=0 && ( \
-        # format "local-module-path jar-base-name jar-new-version base-download-url" \
-        echo "com/fasterxml/jackson/core/jackson-databind jackson-databind 2.13.4.2 ${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-databind"; \
-        echo "com/google/protobuf protobuf-java 3.19.6 ${MAVEN_REPOSITORY}/com/google/protobuf/protobuf-java"; \
-        echo "org/apache/activemq/artemis artemis-server 2.24.0 ${MAVEN_REPOSITORY}/org/apache/activemq/artemis-server"; \
-        echo "org/hibernate hibernate-core 5.4.24.Final ${MAVEN_REPOSITORY}/org/hibernate/hibernate-core"; \
-        echo "com/h2database/h2 h2 2.1.210 ${MAVEN_REPOSITORY}/com/h2database/h2"; \
-        echo "org/jsoup jsoup 1.15.3 ${MAVEN_REPOSITORY}/org/jsoup/jsoup"; \
-        echo "org/yaml/snakeyaml snakeyaml 1.32 ${MAVEN_REPOSITORY}/org/yaml/snakeyaml"; \
-        echo "org/apache/xerces xercesImpl 2.12.2 ${MAVEN_REPOSITORY}/xerces/xercesImpl"; \
-        echo "org/codehaus/woodstox woodstox-core 6.4.0 ${MAVEN_REPOSITORY}/com/fasterxml/woodstox/woodstox-core"; \
-    ) | while read -r LINE; do I=`expr $I + 1`; \
-		echo "  |     |____ $I. $(echo $LINE | cut -d' ' -f1)" && \
-        MODULE_PATH=${WILDFLY_HOME}/modules/system/layers/base/$(echo $LINE | cut -d' ' -f1)/main && \
-        find ${MODULE_PATH}/ -name "*$(echo $LINE | cut -d' ' -f2)-[0-9]*.jar" -delete && \
-        JAR_FILE="$(echo $LINE | cut -d' ' -f2)-$(echo $LINE | cut -d' ' -f3).jar" && \
-        JAR_URL="$(echo $LINE | cut -d' ' -f4)/$(echo $LINE | cut -d' ' -f3)/${JAR_FILE}" && \
-    	sed -r "s/$(echo $LINE | cut -d' ' -f2)\-[0-9]+.+\.jar/${JAR_FILE}/" -i ${MODULE_PATH}/module.xml && \
-        (curl -Lfso ${MODULE_PATH}/${JAR_FILE} ${JAR_URL} || (>&2 /bin/echo -e "\ncannot download java-library\n${JAR_URL}\n" && exit 1)) ; \
-	done && \
+	echo -n "  |  |____ 7. update vulnerable java-libraries" && \
+    ([ "${SKIP_VULNERABILITIES_FIX}" = "true" ] && echo " (skipped)" || (echo && \
+    I=0 && ( \
+        # format "base-download-url jar-base-name jar-new-version(optional)" \
+        echo "${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-databind jackson-databind 2.13.4.1"; \
+        echo "${MAVEN_REPOSITORY}/com/google/protobuf/protobuf-java protobuf-java"; \
+        echo "${MAVEN_REPOSITORY}/org/apache/sshd/sshd-common sshd-common"; \
+        echo "${MAVEN_REPOSITORY}/org/apache/sshd/sshd-core sshd-core"; \
+        echo "${MAVEN_REPOSITORY}/com/fasterxml/woodstox/woodstox-core woodstox-core"; \
+        echo "${MAVEN_REPOSITORY}/org/yaml/snakeyaml snakeyaml"; \
+        echo "${MAVEN_REPOSITORY}/org/jsoup/jsoup jsoup"; \
+        echo "${MAVEN_REPOSITORY}/xerces/xercesImpl xercesImpl"; \
+    ) | while read -r LINE; do UPDATED="false" && \
+       OLD_JARS=$(find /opt/ -name "$(echo $LINE | cut -d' ' -f2)-[0-9]*.jar") && \
+       if [ "x${OLD_JARS}" = "x" ]; then echo "not found" && continue; fi && \
+       for OLD_JAR in ${OLD_JARS}; do I=`expr $I + 1`; \
+           JAR_VERSION="$(echo $LINE | cut -d' ' -f3)" && \
+           if [ "x" = "x${JAR_VERSION}" ]; then \
+               JAR_VERSION=$(curl -LfSs $(echo $LINE | cut -d' ' -f1) | grep -E ">[0-9]\.[-a-zA-Z0-9\.]+/<" | sort -Vuk2 | tail -n1 | sed -r "s/^.+>([0-9]\.[-a-zA-Z0-9\.]+).+$/\1/"); \
+           fi && \
+           echo -n "  |     |____ $I. ${OLD_JAR} > ${JAR_VERSION} > " && \
+           OLD_VERSION=$(echo ${OLD_JAR} | rev | cut -d'-' -f1 | rev | sed 's/.jar//') && \
+           if [ "${OLD_VERSION}" = "${JAR_VERSION}" ]; then echo "same version" && continue; fi && \
+           if [ -d "${OLD_JAR}" ]; then echo "is dir" && continue; fi && \
+           rm -f ${OLD_JAR} && \
+           JAR_FILE="$(echo $LINE | cut -d' ' -f2)-${JAR_VERSION}.jar" && \
+           if [ -f "$(dirname "${OLD_JAR}")/module.xml" ]; then \
+               sed -r "s/$(echo $LINE | cut -d' ' -f2)\-[0-9]+.+\.jar/${JAR_FILE}/" -i $(dirname "${OLD_JAR}")/module.xml; \
+           fi && \
+           UPDATED="true" && \
+           (curl -Lfso $(dirname "${OLD_JAR}")/${JAR_FILE} "$(echo $LINE | cut -d' ' -f1)/${JAR_VERSION}/${JAR_FILE}" && echo "ok" || echo "failed"); \
+       done ; \
+       ([ "true" = "${UPDATED}" ] || echo "  |     |        nothing to update for $(echo $LINE | cut -d' ' -f2)") ; \
+    done)) && \
     \
     echo "  |____ 6. download additional components" && \
     echo -n "  |  |____ 1. download mysql-connector " && \
@@ -178,9 +192,8 @@ RUN echo && echo && \
     chmod +x ${HOME}/wait-for-it.sh && \
     \
     echo "  |____ 7. install keycloack-client" && \
-    echo -n "  |  |____ 1. download " && \
-    (curl -Lfso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lfso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL}\n" && exit 1))  && \
-    echo "($(du -h keycloak.tar.gz | cut -f1))" && \
+    echo "  |  |____ 1. download" && \
+    (curl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL} || (>&2 /bin/echo -e "\ncannot download\ncurl -Lso keycloak.tar.gz ${KEYCLOAK_DOWNLOAD_URL}\n" && exit 1))  && \
     echo "  |  |____ 2. check checksum" && \
     (sha256sum keycloak.tar.gz | grep -q ${KEYCLOAK_SHA256} > /dev/null|| (>&2 echo "sha256sum failed $(sha256sum keycloak.tar.gz)" && exit 1)) && \
     echo "  |  |____ 3. extract" && \
@@ -434,7 +447,7 @@ RUN echo && echo && \
         echo '[[ "${WF_MARKERFILES,,}" == "false" ]] && ./sync_deployments.sh &'; \
         echo; \
         echo 'rm -f '${WILDFLY_HOME}'/standalone/configuration/standalone_xml_history/current/*'; \
-        echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${WF_DEBUG}" = "true" ] && echo "--debug")'; \
+        echo ${WILDFLY_HOME}'/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 $([ "${WF_DEBUG,,}" = "true" ] && echo "--debug")'; \
     } > run_wildfly.sh && \
     \
     { \
@@ -473,7 +486,10 @@ RUN echo && echo && \
     ($JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=default:write-attribute(name=scan-enabled,value=false)" > install.log || (>&2 cat install.log && exit 1)) && \
     ($JBOSS_CLI -c "/subsystem=deployment-scanner/scanner=entrypoint:add(scan-interval=5000,path=${ENTRY_WILDFLY_DEPLOYS})" > install.log || (>&2 cat install.log && exit 1)) && \
     echo -n "true" > ${WF_READY_PATH}/markerfiles_mode && \
-    echo "  |  |____ 5. shutdown app-server" && \
+    echo "  |  |____ 5. enable microprofile-health-smallrye" && \
+    ($JBOSS_CLI -c "/extension=org.wildfly.extension.microprofile.health-smallrye:add" > install.log || (>&2 cat install.log && exit 1)) && \
+    ($JBOSS_CLI -c "/subsystem=microprofile-health-smallrye:add" > install.log || (>&2 cat install.log && exit 1)) && \
+    echo "  |  |____ 6. shutdown app-server" && \
     ($JBOSS_CLI -c ":shutdown" > install.log || (>&2 cat install.log && exit 1)) && \
     \
     echo "  |____ 10. create textfiles 'versions' and 'entrypoints'" && \
